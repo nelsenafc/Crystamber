@@ -1,0 +1,6 @@
+.DS_Store
+server.js
+collection.json
+.vercel
+.env.local
+.env*

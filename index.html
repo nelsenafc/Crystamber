@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crystamber</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='white' stroke='black' stroke-width='5'/><path d='M 4 50 A 46 46 0 0 1 96 50 Z' fill='%23ee1515' stroke='black' stroke-width='5'/><rect x='4' y='47' width='92' height='6' fill='black'/><circle cx='50' cy='50' r='13' fill='white' stroke='black' stroke-width='5'/><circle cx='50' cy='50' r='5' fill='white' stroke='black' stroke-width='3'/></svg>" />
+<style>
+  :root {
+    --bg: #0f0f1e;
+    --bg-2: #1a1a2e;
+    --surface: #232342;
+    --surface-2: #2d2d52;
+    --border: #3a3a5c;
+    --text: #e8e8f0;
+    --text-dim: #9090a8;
+    --accent: #ffcb05;
+    --accent-2: #3b4cca;
+    --success: #4ade80;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #232342 0%, #1a1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg, var(--accent), #ff6b35);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  /* Set tabs */
+  .set-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .set-tab {
+    background: var(--surface);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 7px 18px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .set-tab:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .set-tab.active {
+    background: var(--accent-2);
+    color: #fff;
+    border-color: var(--accent-2);
+    font-weight: 600;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .progress-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    min-width: 200px;
+  }
+
+  .progress-text .count { color: var(--accent); font-size: 1.4rem; }
+
+  .progress-bar {
+    flex: 1;
+    min-width: 200px;
+    height: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--success));
+    transition: width 0.4s ease;
+    border-radius: 999px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+
+  .filter-btn {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+
+  .filter-btn:hover {
+    background: var(--surface-2);
+    border-color: var(--accent);
+  }
+
+  .filter-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Card Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    user-select: none;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 6px 20px rgba(255, 203, 5, 0.2);
+  }
+
+  .card.owned {
+    border-color: var(--success);
+    box-shadow: 0 0 0 1px var(--success), 0 4px 16px rgba(74, 222, 128, 0.25);
+  }
+
+  .card-image-wrap {
+    aspect-ratio: 245 / 342;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: filter 0.25s ease, opacity 0.25s ease;
+  }
+
+  .card:not(.owned) .card-image-wrap img {
+    filter: grayscale(0.85) brightness(0.55);
+  }
+
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background:
+      repeating-linear-gradient(
+        45deg,
+        #1a1a2e,
+        #1a1a2e 8px,
+        #232342 8px,
+        #232342 16px
+      );
+    color: var(--text-dim);
+    font-weight: 700;
+    font-size: 2rem;
+    gap: 4px;
+  }
+  .placeholder .ph-num { font-size: 2.4rem; color: var(--accent); }
+  .placeholder .ph-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .num-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+  }
+
+  .check-overlay {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f0f1e;
+    font-weight: 900;
+    font-size: 1.1rem;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s ease;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .card.owned .check-overlay {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .card-info {
+    padding: 8px 10px 10px;
+  }
+
+  .card-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+  }
+
+  .card:not(.owned) .card-name {
+    color: var(--text-dim);
+  }
+
+  .card-meta {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .card-date {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: var(--success);
+    background: rgba(74, 222, 128, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    line-height: 1.3;
+  }
+  .card-date:hover { background: rgba(74, 222, 128, 0.22); }
+  .card-date input[type="date"] {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--success);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    font-family: inherit;
+    outline: none;
+    color-scheme: dark;
+  }
+  .card:not(.owned) .card-date { display: none; }
+
+  .card-condition {
+    display: inline-block;
+    margin-top: 6px;
+    margin-left: 6px;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: filter 0.15s ease;
+    line-height: 1.3;
+    vertical-align: top;
+  }
+  .card-condition:hover { filter: brightness(1.18); }
+  .card-condition.unset {
+    background: rgba(144, 144, 168, 0.15);
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .card-condition.cond-M,
+  .card-condition.cond-NM   { background: rgba(74, 222, 128, 0.16); color: #4ade80; }
+  .card-condition.cond-LP   { background: rgba(255, 203, 5, 0.18);  color: #ffcb05; }
+  .card-condition.cond-MP   { background: rgba(251, 146, 60, 0.18); color: #fb923c; }
+  .card-condition.cond-HP   { background: rgba(239, 68, 68, 0.20);  color: #ef4444; }
+  .card-condition.cond-DMG  { background: rgba(220, 38, 38, 0.30);  color: #fca5a5; }
+  .card-condition.cond-graded {
+    background: rgba(96, 165, 250, 0.18);
+    color: #60a5fa;
+  }
+  .card-condition select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    font-family: inherit;
+    outline: none;
+  }
+  .card:not(.owned) .card-condition { display: none; }
+
+  .card-price {
+    display: inline-block;
+    margin-top: 6px;
+    margin-left: 6px;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: filter 0.15s ease;
+    line-height: 1.3;
+    vertical-align: top;
+    background: rgba(255, 203, 5, 0.15);
+    color: var(--accent);
+  }
+  .card-price:hover { filter: brightness(1.18); }
+  .card-price.unset {
+    background: rgba(144, 144, 168, 0.15);
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .card-price input[type="number"] {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    font-family: inherit;
+    outline: none;
+    width: 100px;
+    -moz-appearance: textfield;
+  }
+  .card-price input[type="number"]::-webkit-outer-spin-button,
+  .card-price input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .card:not(.owned) .card-price { display: none; }
+
+  .card-cta {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: rgba(144, 144, 168, 0.06);
+    color: var(--text-dim);
+    border: 1px dashed rgba(144, 144, 168, 0.35);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+    pointer-events: none;
+  }
+  .card:hover .card-cta {
+    background: rgba(255, 203, 5, 0.10);
+    color: var(--accent);
+    border-color: rgba(255, 203, 5, 0.45);
+    border-style: solid;
+  }
+  .card.owned .card-cta { display: none; }
+
+  .spend-stat {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 6px;
+  }
+  .spend-stat b { color: var(--accent); font-weight: 600; }
+  .spend-stat:empty { display: none; }
+
+  .sort-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .sort-row label {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+  .sort-row select {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .sort-row select:hover { border-color: var(--accent); }
+  .sort-row select:focus { outline: none; border-color: var(--accent); }
+  .card-edition {
+    display: inline-block;
+    margin-top: 6px;
+    margin-left: 6px;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: filter 0.15s ease;
+    line-height: 1.3;
+    vertical-align: top;
+    background: rgba(96, 165, 250, 0.16);
+    color: #60a5fa;
+  }
+  .card-edition:hover { filter: brightness(1.18); }
+  .card-edition.unset {
+    background: rgba(144, 144, 168, 0.15);
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .card-edition select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    font-family: inherit;
+    outline: none;
+  }
+  .card:not(.owned) .card-edition { display: none; }
+  .latest-pickup {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-left: auto;
+  }
+  .latest-pickup b {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .time-stat {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 12px;
+  }
+  .time-stat b { color: var(--accent); font-weight: 600; }
+  .time-stat.complete {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .time-stat.complete b { color: var(--accent); }
+  .time-stat:empty { display: none; }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+  }
+
+  footer {
+    margin-top: 32px;
+    padding: 16px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+  }
+  footer code {
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 16px 12px 40px; }
+    h1 { font-size: 1.4rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .card-name { font-size: 0.75rem; }
+  }
+
+  #undoToast {
+    display: none;
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    align-items: center;
+    gap: 14px;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    font-size: 0.875rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  #undoToast.visible { display: flex; }
+  #undoToast button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  #undoToast button:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div id="undoToast">
+  <span id="undoToastMsg">Card removed from collection</span>
+  <button onclick="undoRemove()">Undo</button>
+</div>
+<div class="container">
+
+  <header>
+    <h1 id="setTitle">Base</h1>
+    <div class="subtitle" id="setSubtitle">Crystamber · Pokemon TCG Collection Tracker · 102 cards</div>
+
+    <div class="set-tabs" id="setTabs">
+      <button class="set-tab active" data-set="base">Base</button>
+      <button class="set-tab" data-set="jungle">Jungle</button>
+      <button class="set-tab" data-set="fossil">Fossil</button>
+      <button class="set-tab" data-set="teamrocket">Team Rocket</button>
+      <button class="set-tab" data-set="gymheroes">Gym Heroes</button>
+      <button class="set-tab" data-set="gymchallenge">Gym Challenge</button>
+      <button class="set-tab" data-set="neogenesis">Neo Genesis</button>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-text">
+        <span class="count" id="ownedCount">0</span> / <span id="totalCount">102</span> collected
+        <span id="ownedPct" style="color: var(--text-dim); font-size: 0.9rem; margin-left: 6px;"></span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="time-stat" id="timeStat"></div>
+    <div class="spend-stat" id="spendStat"></div>
+
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="owned">Owned</button>
+      <button class="filter-btn" data-filter="missing">Missing</button>
+      <button class="filter-btn" data-filter="Holo Rare">Holo Rare</button>
+      <button class="filter-btn" data-filter="Rare">Rare</button>
+      <button class="filter-btn" data-filter="Uncommon">Uncommon</button>
+      <button class="filter-btn" data-filter="Common">Common</button>
+    </div>
+
+    <div class="sort-row">
+      <label for="sortSelect">Sort:</label>
+      <select id="sortSelect">
+        <option value="card">Card #</option>
+        <option value="dex" selected>Pokedex #</option>
+        <option value="recent">Recently added</option>
+        <option value="oldest">Oldest first</option>
+      </select>
+      <span class="latest-pickup" id="latestPickup"></span>
+    </div>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <span id="serverDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-right:6px;vertical-align:middle;" title="Server not connected · run: node server.js"></span>
+    Progress saves automatically in your browser.
+  </footer>
+</div>
+
+<script>
+  // ─── SET DEFINITIONS ─────────────────────────────────────────────────────────
+
+  const BASE_CARDS = [
+    { num: 1,   name: "Alakazam",               rarity: "Holo Rare", cardType: "Pokemon", dex: 65  },
+    { num: 2,   name: "Blastoise",               rarity: "Holo Rare", cardType: "Pokemon", dex: 9   },
+    { num: 3,   name: "Chansey",                 rarity: "Holo Rare", cardType: "Pokemon", dex: 113 },
+    { num: 4,   name: "Charizard",               rarity: "Holo Rare", cardType: "Pokemon", dex: 6   },
+    { num: 5,   name: "Clefairy",                rarity: "Holo Rare", cardType: "Pokemon", dex: 35  },
+    { num: 6,   name: "Gyarados",                rarity: "Holo Rare", cardType: "Pokemon", dex: 130 },
+    { num: 7,   name: "Hitmonchan",              rarity: "Holo Rare", cardType: "Pokemon", dex: 107 },
+    { num: 8,   name: "Machamp",                 rarity: "Holo Rare", cardType: "Pokemon", dex: 68  },
+    { num: 9,   name: "Magneton",                rarity: "Holo Rare", cardType: "Pokemon", dex: 82  },
+    { num: 10,  name: "Mewtwo",                  rarity: "Holo Rare", cardType: "Pokemon", dex: 150 },
+    { num: 11,  name: "Nidoking",                rarity: "Holo Rare", cardType: "Pokemon", dex: 34  },
+    { num: 12,  name: "Ninetales",               rarity: "Holo Rare", cardType: "Pokemon", dex: 38  },
+    { num: 13,  name: "Poliwrath",               rarity: "Holo Rare", cardType: "Pokemon", dex: 62  },
+    { num: 14,  name: "Raichu",                  rarity: "Holo Rare", cardType: "Pokemon", dex: 26  },
+    { num: 15,  name: "Venusaur",                rarity: "Holo Rare", cardType: "Pokemon", dex: 3   },
+    { num: 16,  name: "Zapdos",                  rarity: "Holo Rare", cardType: "Pokemon", dex: 145 },
+    { num: 17,  name: "Beedrill",                rarity: "Rare",      cardType: "Pokemon", dex: 15  },
+    { num: 18,  name: "Dragonair",               rarity: "Rare",      cardType: "Pokemon", dex: 148 },
+    { num: 19,  name: "Dugtrio",                 rarity: "Rare",      cardType: "Pokemon", dex: 51  },
+    { num: 20,  name: "Electabuzz",              rarity: "Rare",      cardType: "Pokemon", dex: 125 },
+    { num: 21,  name: "Electrode",               rarity: "Rare",      cardType: "Pokemon", dex: 101 },
+    { num: 22,  name: "Pidgeotto",               rarity: "Rare",      cardType: "Pokemon", dex: 17  },
+    { num: 23,  name: "Arcanine",                rarity: "Uncommon",  cardType: "Pokemon", dex: 59  },
+    { num: 24,  name: "Charmeleon",              rarity: "Uncommon",  cardType: "Pokemon", dex: 5   },
+    { num: 25,  name: "Dewgong",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 87  },
+    { num: 26,  name: "Dratini",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 147 },
+    { num: 27,  name: "Farfetch'd",              rarity: "Uncommon",  cardType: "Pokemon", dex: 83  },
+    { num: 28,  name: "Growlithe",               rarity: "Uncommon",  cardType: "Pokemon", dex: 58  },
+    { num: 29,  name: "Haunter",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 93  },
+    { num: 30,  name: "Ivysaur",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 2   },
+    { num: 31,  name: "Jynx",                    rarity: "Uncommon",  cardType: "Pokemon", dex: 124 },
+    { num: 32,  name: "Kadabra",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 64  },
+    { num: 33,  name: "Kakuna",                  rarity: "Uncommon",  cardType: "Pokemon", dex: 14  },
+    { num: 34,  name: "Machoke",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 67  },
+    { num: 35,  name: "Magikarp",                rarity: "Uncommon",  cardType: "Pokemon", dex: 129 },
+    { num: 36,  name: "Magmar",                  rarity: "Uncommon",  cardType: "Pokemon", dex: 126 },
+    { num: 37,  name: "Nidorino",                rarity: "Uncommon",  cardType: "Pokemon", dex: 33  },
+    { num: 38,  name: "Poliwhirl",               rarity: "Uncommon",  cardType: "Pokemon", dex: 61  },
+    { num: 39,  name: "Porygon",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 137 },
+    { num: 40,  name: "Raticate",                rarity: "Uncommon",  cardType: "Pokemon", dex: 20  },
+    { num: 41,  name: "Seel",                    rarity: "Uncommon",  cardType: "Pokemon", dex: 86  },
+    { num: 42,  name: "Wartortle",               rarity: "Uncommon",  cardType: "Pokemon", dex: 8   },
+    { num: 43,  name: "Abra",                    rarity: "Common",    cardType: "Pokemon", dex: 63  },
+    { num: 44,  name: "Bulbasaur",               rarity: "Common",    cardType: "Pokemon", dex: 1   },
+    { num: 45,  name: "Caterpie",                rarity: "Common",    cardType: "Pokemon", dex: 10  },
+    { num: 46,  name: "Charmander",              rarity: "Common",    cardType: "Pokemon", dex: 4   },
+    { num: 47,  name: "Diglett",                 rarity: "Common",    cardType: "Pokemon", dex: 50  },
+    { num: 48,  name: "Doduo",                   rarity: "Common",    cardType: "Pokemon", dex: 84  },
+    { num: 49,  name: "Drowzee",                 rarity: "Common",    cardType: "Pokemon", dex: 96  },
+    { num: 50,  name: "Gastly",                  rarity: "Common",    cardType: "Pokemon", dex: 92  },
+    { num: 51,  name: "Koffing",                 rarity: "Common",    cardType: "Pokemon", dex: 109 },
+    { num: 52,  name: "Machop",                  rarity: "Common",    cardType: "Pokemon", dex: 66  },
+    { num: 53,  name: "Magnemite",               rarity: "Common",    cardType: "Pokemon", dex: 81  },
+    { num: 54,  name: "Metapod",                 rarity: "Common",    cardType: "Pokemon", dex: 11  },
+    { num: 55,  name: "Nidoran♂",               rarity: "Common",    cardType: "Pokemon", dex: 32  },
+    { num: 56,  name: "Onix",                    rarity: "Common",    cardType: "Pokemon", dex: 95  },
+    { num: 57,  name: "Pidgey",                  rarity: "Common",    cardType: "Pokemon", dex: 16  },
+    { num: 58,  name: "Pikachu",                 rarity: "Common",    cardType: "Pokemon", dex: 25  },
+    { num: 59,  name: "Poliwag",                 rarity: "Common",    cardType: "Pokemon", dex: 60  },
+    { num: 60,  name: "Ponyta",                  rarity: "Common",    cardType: "Pokemon", dex: 77  },
+    { num: 61,  name: "Rattata",                 rarity: "Common",    cardType: "Pokemon", dex: 19  },
+    { num: 62,  name: "Sandshrew",               rarity: "Common",    cardType: "Pokemon", dex: 27  },
+    { num: 63,  name: "Squirtle",                rarity: "Common",    cardType: "Pokemon", dex: 7   },
+    { num: 64,  name: "Starmie",                 rarity: "Common",    cardType: "Pokemon", dex: 121 },
+    { num: 65,  name: "Staryu",                  rarity: "Common",    cardType: "Pokemon", dex: 120 },
+    { num: 66,  name: "Tangela",                 rarity: "Common",    cardType: "Pokemon", dex: 114 },
+    { num: 67,  name: "Voltorb",                 rarity: "Common",    cardType: "Pokemon", dex: 100 },
+    { num: 68,  name: "Vulpix",                  rarity: "Common",    cardType: "Pokemon", dex: 37  },
+    { num: 69,  name: "Weedle",                  rarity: "Common",    cardType: "Pokemon", dex: 13  },
+    { num: 70,  name: "Clefairy Doll",           rarity: "Rare",      cardType: "Trainer" },
+    { num: 71,  name: "Computer Search",         rarity: "Rare",      cardType: "Trainer" },
+    { num: 72,  name: "Devolution Spray",        rarity: "Rare",      cardType: "Trainer" },
+    { num: 73,  name: "Impostor Professor Oak",  rarity: "Rare",      cardType: "Trainer" },
+    { num: 74,  name: "Item Finder",             rarity: "Rare",      cardType: "Trainer" },
+    { num: 75,  name: "Lass",                    rarity: "Rare",      cardType: "Trainer" },
+    { num: 76,  name: "Pokemon Breeder",         rarity: "Rare",      cardType: "Trainer" },
+    { num: 77,  name: "Pokemon Trader",          rarity: "Rare",      cardType: "Trainer" },
+    { num: 78,  name: "Scoop Up",                rarity: "Rare",      cardType: "Trainer" },
+    { num: 79,  name: "Super Energy Removal",    rarity: "Rare",      cardType: "Trainer" },
+    { num: 80,  name: "Defender",                rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 81,  name: "Energy Retrieval",        rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 82,  name: "Full Heal",               rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 83,  name: "Maintenance",             rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 84,  name: "Plus Power",              rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 85,  name: "Pokemon Center",          rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 86,  name: "Pokemon Flute",           rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 87,  name: "Pokedex",                 rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 88,  name: "Professor Oak",           rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 89,  name: "Revive",                  rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 90,  name: "Super Potion",            rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 91,  name: "Bill",                    rarity: "Common",    cardType: "Trainer" },
+    { num: 92,  name: "Energy Removal",          rarity: "Common",    cardType: "Trainer" },
+    { num: 93,  name: "Gust of Wind",            rarity: "Common",    cardType: "Trainer" },
+    { num: 94,  name: "Potion",                  rarity: "Common",    cardType: "Trainer" },
+    { num: 95,  name: "Switch",                  rarity: "Common",    cardType: "Trainer" },
+    { num: 96,  name: "Double Colorless Energy", rarity: "Uncommon",  cardType: "Energy" },
+    { num: 97,  name: "Fighting Energy",         rarity: "Common",    cardType: "Energy" },
+    { num: 98,  name: "Fire Energy",             rarity: "Common",    cardType: "Energy" },
+    { num: 99,  name: "Grass Energy",            rarity: "Common",    cardType: "Energy" },
+    { num: 100, name: "Lightning Energy",        rarity: "Common",    cardType: "Energy" },
+    { num: 101, name: "Psychic Energy",          rarity: "Common",    cardType: "Energy" },
+    { num: 102, name: "Water Energy",            rarity: "Common",    cardType: "Energy" },
+  ];
+
+  const FOSSIL_CARDS = [
+    { num: 1,  name: "Aerodactyl",  rarity: "Holo Rare", cardType: "Pokemon", dex: 142 },
+    { num: 2,  name: "Articuno",    rarity: "Holo Rare", cardType: "Pokemon", dex: 144 },
+    { num: 3,  name: "Ditto",       rarity: "Holo Rare", cardType: "Pokemon", dex: 132 },
+    { num: 4,  name: "Dragonite",   rarity: "Holo Rare", cardType: "Pokemon", dex: 149 },
+    { num: 5,  name: "Gengar",      rarity: "Holo Rare", cardType: "Pokemon", dex: 94  },
+    { num: 6,  name: "Haunter",     rarity: "Holo Rare", cardType: "Pokemon", dex: 93  },
+    { num: 7,  name: "Hitmonlee",   rarity: "Holo Rare", cardType: "Pokemon", dex: 106 },
+    { num: 8,  name: "Hypno",       rarity: "Holo Rare", cardType: "Pokemon", dex: 97  },
+    { num: 9,  name: "Kabutops",    rarity: "Holo Rare", cardType: "Pokemon", dex: 141 },
+    { num: 10, name: "Lapras",      rarity: "Holo Rare", cardType: "Pokemon", dex: 131 },
+    { num: 11, name: "Magneton",    rarity: "Holo Rare", cardType: "Pokemon", dex: 82  },
+    { num: 12, name: "Moltres",     rarity: "Holo Rare", cardType: "Pokemon", dex: 146 },
+    { num: 13, name: "Muk",         rarity: "Holo Rare", cardType: "Pokemon", dex: 89  },
+    { num: 14, name: "Raichu",      rarity: "Holo Rare", cardType: "Pokemon", dex: 26  },
+    { num: 15, name: "Zapdos",      rarity: "Holo Rare", cardType: "Pokemon", dex: 145 },
+    { num: 16, name: "Aerodactyl",  rarity: "Rare",      cardType: "Pokemon", dex: 142 },
+    { num: 17, name: "Articuno",    rarity: "Rare",      cardType: "Pokemon", dex: 144 },
+    { num: 18, name: "Ditto",       rarity: "Rare",      cardType: "Pokemon", dex: 132 },
+    { num: 19, name: "Dragonite",   rarity: "Rare",      cardType: "Pokemon", dex: 149 },
+    { num: 20, name: "Gengar",      rarity: "Rare",      cardType: "Pokemon", dex: 94  },
+    { num: 21, name: "Haunter",     rarity: "Rare",      cardType: "Pokemon", dex: 93  },
+    { num: 22, name: "Hitmonlee",   rarity: "Rare",      cardType: "Pokemon", dex: 106 },
+    { num: 23, name: "Hypno",       rarity: "Rare",      cardType: "Pokemon", dex: 97  },
+    { num: 24, name: "Kabutops",    rarity: "Rare",      cardType: "Pokemon", dex: 141 },
+    { num: 25, name: "Lapras",      rarity: "Rare",      cardType: "Pokemon", dex: 131 },
+    { num: 26, name: "Magneton",    rarity: "Rare",      cardType: "Pokemon", dex: 82  },
+    { num: 27, name: "Moltres",     rarity: "Rare",      cardType: "Pokemon", dex: 146 },
+    { num: 28, name: "Muk",         rarity: "Rare",      cardType: "Pokemon", dex: 89  },
+    { num: 29, name: "Raichu",      rarity: "Rare",      cardType: "Pokemon", dex: 26  },
+    { num: 30, name: "Zapdos",      rarity: "Rare",      cardType: "Pokemon", dex: 145 },
+    { num: 31, name: "Arbok",       rarity: "Uncommon",  cardType: "Pokemon", dex: 24  },
+    { num: 32, name: "Cloyster",    rarity: "Uncommon",  cardType: "Pokemon", dex: 91  },
+    { num: 33, name: "Gastly",      rarity: "Uncommon",  cardType: "Pokemon", dex: 92  },
+    { num: 34, name: "Golbat",      rarity: "Uncommon",  cardType: "Pokemon", dex: 42  },
+    { num: 35, name: "Golduck",     rarity: "Uncommon",  cardType: "Pokemon", dex: 55  },
+    { num: 36, name: "Golem",       rarity: "Uncommon",  cardType: "Pokemon", dex: 76  },
+    { num: 37, name: "Graveler",    rarity: "Uncommon",  cardType: "Pokemon", dex: 75  },
+    { num: 38, name: "Kingler",     rarity: "Uncommon",  cardType: "Pokemon", dex: 99  },
+    { num: 39, name: "Magmar",      rarity: "Uncommon",  cardType: "Pokemon", dex: 126 },
+    { num: 40, name: "Omastar",     rarity: "Uncommon",  cardType: "Pokemon", dex: 139 },
+    { num: 41, name: "Sandslash",   rarity: "Uncommon",  cardType: "Pokemon", dex: 28  },
+    { num: 42, name: "Seadra",      rarity: "Uncommon",  cardType: "Pokemon", dex: 117 },
+    { num: 43, name: "Slowbro",     rarity: "Uncommon",  cardType: "Pokemon", dex: 80  },
+    { num: 44, name: "Tentacruel",  rarity: "Uncommon",  cardType: "Pokemon", dex: 73  },
+    { num: 45, name: "Weezing",     rarity: "Uncommon",  cardType: "Pokemon", dex: 110 },
+    { num: 46, name: "Ekans",       rarity: "Common",    cardType: "Pokemon", dex: 23  },
+    { num: 47, name: "Geodude",     rarity: "Common",    cardType: "Pokemon", dex: 74  },
+    { num: 48, name: "Grimer",      rarity: "Common",    cardType: "Pokemon", dex: 88  },
+    { num: 49, name: "Horsea",      rarity: "Common",    cardType: "Pokemon", dex: 116 },
+    { num: 50, name: "Kabuto",      rarity: "Common",    cardType: "Pokemon", dex: 140 },
+    { num: 51, name: "Krabby",      rarity: "Common",    cardType: "Pokemon", dex: 98  },
+    { num: 52, name: "Omanyte",     rarity: "Common",    cardType: "Pokemon", dex: 138 },
+    { num: 53, name: "Psyduck",     rarity: "Common",    cardType: "Pokemon", dex: 54  },
+    { num: 54, name: "Shellder",    rarity: "Common",    cardType: "Pokemon", dex: 90  },
+    { num: 55, name: "Slowpoke",    rarity: "Common",    cardType: "Pokemon", dex: 79  },
+    { num: 56, name: "Tentacool",   rarity: "Common",    cardType: "Pokemon", dex: 72  },
+    { num: 57, name: "Zubat",       rarity: "Common",    cardType: "Pokemon", dex: 41  },
+    { num: 58, name: "Mr. Fuji",    rarity: "Uncommon",  cardType: "Trainer" },
+    { num: 59, name: "Energy Search", rarity: "Common",  cardType: "Trainer" },
+    { num: 60, name: "Gambler",     rarity: "Common",    cardType: "Trainer" },
+    { num: 61, name: "Recycle",     rarity: "Common",    cardType: "Trainer" },
+    { num: 62, name: "Mysterious Fossil", rarity: "Common", cardType: "Trainer" },
+  ];
+
+  const JUNGLE_CARDS = [
+    // Holo Rares
+    { num: 1,  name: "Clefable",    rarity: "Holo Rare", cardType: "Pokemon", dex: 36  },
+    { num: 2,  name: "Electrode",   rarity: "Holo Rare", cardType: "Pokemon", dex: 101 },
+    { num: 3,  name: "Flareon",     rarity: "Holo Rare", cardType: "Pokemon", dex: 136 },
+    { num: 4,  name: "Jolteon",     rarity: "Holo Rare", cardType: "Pokemon", dex: 135 },
+    { num: 5,  name: "Kangaskhan",  rarity: "Holo Rare", cardType: "Pokemon", dex: 115 },
+    { num: 6,  name: "Mr. Mime",    rarity: "Holo Rare", cardType: "Pokemon", dex: 122 },
+    { num: 7,  name: "Nidoqueen",   rarity: "Holo Rare", cardType: "Pokemon", dex: 31  },
+    { num: 8,  name: "Pidgeot",     rarity: "Holo Rare", cardType: "Pokemon", dex: 18  },
+    { num: 9,  name: "Pinsir",      rarity: "Holo Rare", cardType: "Pokemon", dex: 127 },
+    { num: 10, name: "Scyther",     rarity: "Holo Rare", cardType: "Pokemon", dex: 123 },
+    { num: 11, name: "Snorlax",     rarity: "Holo Rare", cardType: "Pokemon", dex: 143 },
+    { num: 12, name: "Vaporeon",    rarity: "Holo Rare", cardType: "Pokemon", dex: 134 },
+    { num: 13, name: "Venomoth",    rarity: "Holo Rare", cardType: "Pokemon", dex: 49  },
+    { num: 14, name: "Victreebel",  rarity: "Holo Rare", cardType: "Pokemon", dex: 71  },
+    { num: 15, name: "Vileplume",   rarity: "Holo Rare", cardType: "Pokemon", dex: 45  },
+    { num: 16, name: "Wigglytuff",  rarity: "Holo Rare", cardType: "Pokemon", dex: 40  },
+    // Non-Holo Rares
+    { num: 17, name: "Clefable",    rarity: "Rare",      cardType: "Pokemon", dex: 36  },
+    { num: 18, name: "Electrode",   rarity: "Rare",      cardType: "Pokemon", dex: 101 },
+    { num: 19, name: "Flareon",     rarity: "Rare",      cardType: "Pokemon", dex: 136 },
+    { num: 20, name: "Jolteon",     rarity: "Rare",      cardType: "Pokemon", dex: 135 },
+    { num: 21, name: "Kangaskhan",  rarity: "Rare",      cardType: "Pokemon", dex: 115 },
+    { num: 22, name: "Mr. Mime",    rarity: "Rare",      cardType: "Pokemon", dex: 122 },
+    { num: 23, name: "Nidoqueen",   rarity: "Rare",      cardType: "Pokemon", dex: 31  },
+    { num: 24, name: "Pidgeot",     rarity: "Rare",      cardType: "Pokemon", dex: 18  },
+    { num: 25, name: "Pinsir",      rarity: "Rare",      cardType: "Pokemon", dex: 127 },
+    { num: 26, name: "Scyther",     rarity: "Rare",      cardType: "Pokemon", dex: 123 },
+    { num: 27, name: "Snorlax",     rarity: "Rare",      cardType: "Pokemon", dex: 143 },
+    { num: 28, name: "Vaporeon",    rarity: "Rare",      cardType: "Pokemon", dex: 134 },
+    { num: 29, name: "Venomoth",    rarity: "Rare",      cardType: "Pokemon", dex: 49  },
+    { num: 30, name: "Victreebel",  rarity: "Rare",      cardType: "Pokemon", dex: 71  },
+    { num: 31, name: "Vileplume",   rarity: "Rare",      cardType: "Pokemon", dex: 45  },
+    { num: 32, name: "Wigglytuff",  rarity: "Rare",      cardType: "Pokemon", dex: 40  },
+    // Uncommons
+    { num: 33, name: "Butterfree",  rarity: "Uncommon",  cardType: "Pokemon", dex: 12  },
+    { num: 34, name: "Dodrio",      rarity: "Uncommon",  cardType: "Pokemon", dex: 85  },
+    { num: 35, name: "Exeggutor",   rarity: "Uncommon",  cardType: "Pokemon", dex: 103 },
+    { num: 36, name: "Fearow",      rarity: "Uncommon",  cardType: "Pokemon", dex: 22  },
+    { num: 37, name: "Gloom",       rarity: "Uncommon",  cardType: "Pokemon", dex: 44  },
+    { num: 38, name: "Lickitung",   rarity: "Uncommon",  cardType: "Pokemon", dex: 108 },
+    { num: 39, name: "Marowak",     rarity: "Uncommon",  cardType: "Pokemon", dex: 105 },
+    { num: 40, name: "Nidorina",    rarity: "Uncommon",  cardType: "Pokemon", dex: 30  },
+    { num: 41, name: "Parasect",    rarity: "Uncommon",  cardType: "Pokemon", dex: 47  },
+    { num: 42, name: "Persian",     rarity: "Uncommon",  cardType: "Pokemon", dex: 53  },
+    { num: 43, name: "Primeape",    rarity: "Uncommon",  cardType: "Pokemon", dex: 57  },
+    { num: 44, name: "Rapidash",    rarity: "Uncommon",  cardType: "Pokemon", dex: 78  },
+    { num: 45, name: "Rhydon",      rarity: "Uncommon",  cardType: "Pokemon", dex: 112 },
+    { num: 46, name: "Seaking",     rarity: "Uncommon",  cardType: "Pokemon", dex: 119 },
+    { num: 47, name: "Tauros",      rarity: "Uncommon",  cardType: "Pokemon", dex: 128 },
+    { num: 48, name: "Weepinbell",  rarity: "Uncommon",  cardType: "Pokemon", dex: 70  },
+    // Commons
+    { num: 49, name: "Bellsprout",  rarity: "Common",    cardType: "Pokemon", dex: 69  },
+    { num: 50, name: "Cubone",      rarity: "Common",    cardType: "Pokemon", dex: 104 },
+    { num: 51, name: "Eevee",       rarity: "Common",    cardType: "Pokemon", dex: 133 },
+    { num: 52, name: "Exeggcute",   rarity: "Common",    cardType: "Pokemon", dex: 102 },
+    { num: 53, name: "Goldeen",     rarity: "Common",    cardType: "Pokemon", dex: 118 },
+    { num: 54, name: "Jigglypuff",  rarity: "Common",    cardType: "Pokemon", dex: 39  },
+    { num: 55, name: "Mankey",      rarity: "Common",    cardType: "Pokemon", dex: 56  },
+    { num: 56, name: "Meowth",      rarity: "Common",    cardType: "Pokemon", dex: 52  },
+    { num: 57, name: "Nidoran♀",   rarity: "Common",    cardType: "Pokemon", dex: 29  },
+    { num: 58, name: "Oddish",      rarity: "Common",    cardType: "Pokemon", dex: 43  },
+    { num: 59, name: "Paras",       rarity: "Common",    cardType: "Pokemon", dex: 46  },
+    { num: 60, name: "Pikachu",     rarity: "Common",    cardType: "Pokemon", dex: 25  },
+    { num: 61, name: "Rhyhorn",     rarity: "Common",    cardType: "Pokemon", dex: 111 },
+    { num: 62, name: "Spearow",     rarity: "Common",    cardType: "Pokemon", dex: 21  },
+    { num: 63, name: "Venonat",     rarity: "Common",    cardType: "Pokemon", dex: 48  },
+    { num: 64, name: "Poké Ball",   rarity: "Common",    cardType: "Trainer" },
+  ];
+
+  const TEAM_ROCKET_CARDS = [
+    { num: 1,  name: "Dark Alakazam",             rarity: "Holo Rare", cardType: "Pokemon", dex: 65  },
+    { num: 2,  name: "Dark Arbok",                rarity: "Holo Rare", cardType: "Pokemon", dex: 24  },
+    { num: 3,  name: "Dark Blastoise",            rarity: "Holo Rare", cardType: "Pokemon", dex: 9   },
+    { num: 4,  name: "Dark Charizard",            rarity: "Holo Rare", cardType: "Pokemon", dex: 6   },
+    { num: 5,  name: "Dark Dragonite",            rarity: "Holo Rare", cardType: "Pokemon", dex: 149 },
+    { num: 6,  name: "Dark Dugtrio",              rarity: "Holo Rare", cardType: "Pokemon", dex: 51  },
+    { num: 7,  name: "Dark Golbat",               rarity: "Holo Rare", cardType: "Pokemon", dex: 42  },
+    { num: 8,  name: "Dark Gyarados",             rarity: "Holo Rare", cardType: "Pokemon", dex: 130 },
+    { num: 9,  name: "Dark Hypno",                rarity: "Holo Rare", cardType: "Pokemon", dex: 97  },
+    { num: 10, name: "Dark Machamp",              rarity: "Holo Rare", cardType: "Pokemon", dex: 68  },
+    { num: 11, name: "Dark Magneton",             rarity: "Holo Rare", cardType: "Pokemon", dex: 82  },
+    { num: 12, name: "Dark Slowbro",              rarity: "Holo Rare", cardType: "Pokemon", dex: 80  },
+    { num: 13, name: "Dark Vileplume",            rarity: "Holo Rare", cardType: "Pokemon", dex: 45  },
+    { num: 14, name: "Dark Weezing",              rarity: "Holo Rare", cardType: "Pokemon", dex: 110 },
+    { num: 15, name: "Here Comes Team Rocket!",   rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 16, name: "Rocket's Sneak Attack",     rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 17, name: "Rainbow Energy",            rarity: "Holo Rare", cardType: "Energy"            },
+    { num: 18, name: "Dark Alakazam",             rarity: "Rare",      cardType: "Pokemon", dex: 65  },
+    { num: 19, name: "Dark Arbok",                rarity: "Rare",      cardType: "Pokemon", dex: 24  },
+    { num: 20, name: "Dark Blastoise",            rarity: "Rare",      cardType: "Pokemon", dex: 9   },
+    { num: 21, name: "Dark Charizard",            rarity: "Rare",      cardType: "Pokemon", dex: 6   },
+    { num: 22, name: "Dark Dragonite",            rarity: "Rare",      cardType: "Pokemon", dex: 149 },
+    { num: 23, name: "Dark Dugtrio",              rarity: "Rare",      cardType: "Pokemon", dex: 51  },
+    { num: 24, name: "Dark Golbat",               rarity: "Rare",      cardType: "Pokemon", dex: 42  },
+    { num: 25, name: "Dark Gyarados",             rarity: "Rare",      cardType: "Pokemon", dex: 130 },
+    { num: 26, name: "Dark Hypno",                rarity: "Rare",      cardType: "Pokemon", dex: 97  },
+    { num: 27, name: "Dark Machamp",              rarity: "Rare",      cardType: "Pokemon", dex: 68  },
+    { num: 28, name: "Dark Magneton",             rarity: "Rare",      cardType: "Pokemon", dex: 82  },
+    { num: 29, name: "Dark Slowbro",              rarity: "Rare",      cardType: "Pokemon", dex: 80  },
+    { num: 30, name: "Dark Vileplume",            rarity: "Rare",      cardType: "Pokemon", dex: 45  },
+    { num: 31, name: "Dark Weezing",              rarity: "Rare",      cardType: "Pokemon", dex: 110 },
+    { num: 32, name: "Dark Charmeleon",           rarity: "Uncommon",  cardType: "Pokemon", dex: 5   },
+    { num: 33, name: "Dark Dragonair",            rarity: "Uncommon",  cardType: "Pokemon", dex: 148 },
+    { num: 34, name: "Dark Electrode",            rarity: "Uncommon",  cardType: "Pokemon", dex: 101 },
+    { num: 35, name: "Dark Flareon",              rarity: "Uncommon",  cardType: "Pokemon", dex: 136 },
+    { num: 36, name: "Dark Gloom",                rarity: "Uncommon",  cardType: "Pokemon", dex: 44  },
+    { num: 37, name: "Dark Golduck",              rarity: "Uncommon",  cardType: "Pokemon", dex: 55  },
+    { num: 38, name: "Dark Jolteon",              rarity: "Uncommon",  cardType: "Pokemon", dex: 135 },
+    { num: 39, name: "Dark Kadabra",              rarity: "Uncommon",  cardType: "Pokemon", dex: 64  },
+    { num: 40, name: "Dark Machoke",              rarity: "Uncommon",  cardType: "Pokemon", dex: 67  },
+    { num: 41, name: "Dark Muk",                  rarity: "Uncommon",  cardType: "Pokemon", dex: 89  },
+    { num: 42, name: "Dark Persian",              rarity: "Uncommon",  cardType: "Pokemon", dex: 53  },
+    { num: 43, name: "Dark Primeape",             rarity: "Uncommon",  cardType: "Pokemon", dex: 57  },
+    { num: 44, name: "Dark Rapidash",             rarity: "Uncommon",  cardType: "Pokemon", dex: 78  },
+    { num: 45, name: "Dark Vaporeon",             rarity: "Uncommon",  cardType: "Pokemon", dex: 134 },
+    { num: 46, name: "Dark Wartortle",            rarity: "Uncommon",  cardType: "Pokemon", dex: 8   },
+    { num: 47, name: "Magikarp",                  rarity: "Uncommon",  cardType: "Pokemon", dex: 129 },
+    { num: 48, name: "Porygon",                   rarity: "Uncommon",  cardType: "Pokemon", dex: 137 },
+    { num: 49, name: "Abra",                      rarity: "Common",    cardType: "Pokemon", dex: 63  },
+    { num: 50, name: "Charmander",                rarity: "Common",    cardType: "Pokemon", dex: 4   },
+    { num: 51, name: "Dark Raticate",             rarity: "Common",    cardType: "Pokemon", dex: 20  },
+    { num: 52, name: "Diglett",                   rarity: "Common",    cardType: "Pokemon", dex: 50  },
+    { num: 53, name: "Dratini",                   rarity: "Common",    cardType: "Pokemon", dex: 147 },
+    { num: 54, name: "Drowzee",                   rarity: "Common",    cardType: "Pokemon", dex: 96  },
+    { num: 55, name: "Eevee",                     rarity: "Common",    cardType: "Pokemon", dex: 133 },
+    { num: 56, name: "Ekans",                     rarity: "Common",    cardType: "Pokemon", dex: 23  },
+    { num: 57, name: "Grimer",                    rarity: "Common",    cardType: "Pokemon", dex: 88  },
+    { num: 58, name: "Koffing",                   rarity: "Common",    cardType: "Pokemon", dex: 109 },
+    { num: 59, name: "Machop",                    rarity: "Common",    cardType: "Pokemon", dex: 66  },
+    { num: 60, name: "Magnemite",                 rarity: "Common",    cardType: "Pokemon", dex: 81  },
+    { num: 61, name: "Mankey",                    rarity: "Common",    cardType: "Pokemon", dex: 56  },
+    { num: 62, name: "Meowth",                    rarity: "Common",    cardType: "Pokemon", dex: 52  },
+    { num: 63, name: "Oddish",                    rarity: "Common",    cardType: "Pokemon", dex: 43  },
+    { num: 64, name: "Ponyta",                    rarity: "Common",    cardType: "Pokemon", dex: 77  },
+    { num: 65, name: "Psyduck",                   rarity: "Common",    cardType: "Pokemon", dex: 54  },
+    { num: 66, name: "Rattata",                   rarity: "Common",    cardType: "Pokemon", dex: 19  },
+    { num: 67, name: "Slowpoke",                  rarity: "Common",    cardType: "Pokemon", dex: 79  },
+    { num: 68, name: "Squirtle",                  rarity: "Common",    cardType: "Pokemon", dex: 7   },
+    { num: 69, name: "Voltorb",                   rarity: "Common",    cardType: "Pokemon", dex: 100 },
+    { num: 70, name: "Zubat",                     rarity: "Common",    cardType: "Pokemon", dex: 41  },
+    { num: 71, name: "Here Comes Team Rocket!",   rarity: "Rare",      cardType: "Trainer"           },
+    { num: 72, name: "Rocket's Sneak Attack",     rarity: "Rare",      cardType: "Trainer"           },
+    { num: 73, name: "The Boss's Way",            rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 74, name: "Challenge!",                rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 75, name: "Digger",                    rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 76, name: "Imposter Oak's Revenge",    rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 77, name: "Nightly Garbage Run",       rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 78, name: "Goop Gas Attack",           rarity: "Common",    cardType: "Trainer"           },
+    { num: 79, name: "Sleep!",                    rarity: "Common",    cardType: "Trainer"           },
+    { num: 80, name: "Rainbow Energy",            rarity: "Rare",      cardType: "Energy"            },
+    { num: 81, name: "Full Heal Energy",          rarity: "Uncommon",  cardType: "Energy"            },
+    { num: 82, name: "Potion Energy",             rarity: "Uncommon",  cardType: "Energy"            },
+    { num: 83, name: "Dark Raichu",               rarity: "Holo Rare", cardType: "Pokemon", dex: 26  },
+  ];
+
+  const GYM_HEROES_CARDS = [
+    { num: 1,   name: "Blaine's Moltres",         rarity: "Holo Rare", cardType: "Pokemon", dex: 146 },
+    { num: 2,   name: "Brock's Rhydon",           rarity: "Holo Rare", cardType: "Pokemon", dex: 112 },
+    { num: 3,   name: "Erika's Clefable",         rarity: "Holo Rare", cardType: "Pokemon", dex: 36  },
+    { num: 4,   name: "Erika's Dragonair",        rarity: "Holo Rare", cardType: "Pokemon", dex: 148 },
+    { num: 5,   name: "Erika's Vileplume",        rarity: "Holo Rare", cardType: "Pokemon", dex: 45  },
+    { num: 6,   name: "Lt. Surge's Electabuzz",   rarity: "Holo Rare", cardType: "Pokemon", dex: 125 },
+    { num: 7,   name: "Lt. Surge's Fearow",       rarity: "Holo Rare", cardType: "Pokemon", dex: 22  },
+    { num: 8,   name: "Lt. Surge's Magneton",     rarity: "Holo Rare", cardType: "Pokemon", dex: 82  },
+    { num: 9,   name: "Misty's Seadra",           rarity: "Holo Rare", cardType: "Pokemon", dex: 117 },
+    { num: 10,  name: "Misty's Tentacruel",       rarity: "Holo Rare", cardType: "Pokemon", dex: 73  },
+    { num: 11,  name: "Rocket's Hitmonchan",      rarity: "Holo Rare", cardType: "Pokemon", dex: 107 },
+    { num: 12,  name: "Rocket's Moltres",         rarity: "Holo Rare", cardType: "Pokemon", dex: 146 },
+    { num: 13,  name: "Rocket's Scyther",         rarity: "Holo Rare", cardType: "Pokemon", dex: 123 },
+    { num: 14,  name: "Sabrina's Gengar",         rarity: "Holo Rare", cardType: "Pokemon", dex: 94  },
+    { num: 15,  name: "Brock",                    rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 16,  name: "Erika",                    rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 17,  name: "Lt. Surge",                rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 18,  name: "Misty",                    rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 19,  name: "The Rocket's Trap",        rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 20,  name: "Brock's Golem",            rarity: "Rare",      cardType: "Pokemon", dex: 76  },
+    { num: 21,  name: "Brock's Onix",             rarity: "Rare",      cardType: "Pokemon", dex: 95  },
+    { num: 22,  name: "Brock's Rhyhorn",          rarity: "Rare",      cardType: "Pokemon", dex: 111 },
+    { num: 23,  name: "Brock's Sandslash",        rarity: "Rare",      cardType: "Pokemon", dex: 28  },
+    { num: 24,  name: "Brock's Zubat",            rarity: "Rare",      cardType: "Pokemon", dex: 41  },
+    { num: 25,  name: "Erika's Clefairy",         rarity: "Rare",      cardType: "Pokemon", dex: 35  },
+    { num: 26,  name: "Erika's Victreebel",       rarity: "Rare",      cardType: "Pokemon", dex: 71  },
+    { num: 27,  name: "Lt. Surge's Electabuzz",   rarity: "Rare",      cardType: "Pokemon", dex: 125 },
+    { num: 28,  name: "Lt. Surge's Raichu",       rarity: "Rare",      cardType: "Pokemon", dex: 26  },
+    { num: 29,  name: "Misty's Cloyster",         rarity: "Rare",      cardType: "Pokemon", dex: 91  },
+    { num: 30,  name: "Misty's Goldeen",          rarity: "Rare",      cardType: "Pokemon", dex: 118 },
+    { num: 31,  name: "Misty's Poliwrath",        rarity: "Rare",      cardType: "Pokemon", dex: 62  },
+    { num: 32,  name: "Misty's Tentacool",        rarity: "Rare",      cardType: "Pokemon", dex: 72  },
+    { num: 33,  name: "Rocket's Snorlax",         rarity: "Rare",      cardType: "Pokemon", dex: 143 },
+    { num: 34,  name: "Sabrina's Venomoth",       rarity: "Rare",      cardType: "Pokemon", dex: 49  },
+    { num: 35,  name: "Blaine's Growlithe",       rarity: "Uncommon",  cardType: "Pokemon", dex: 58  },
+    { num: 36,  name: "Blaine's Kangaskhan",      rarity: "Uncommon",  cardType: "Pokemon", dex: 115 },
+    { num: 37,  name: "Blaine's Magmar",          rarity: "Uncommon",  cardType: "Pokemon", dex: 126 },
+    { num: 38,  name: "Brock's Geodude",          rarity: "Uncommon",  cardType: "Pokemon", dex: 74  },
+    { num: 39,  name: "Brock's Golbat",           rarity: "Uncommon",  cardType: "Pokemon", dex: 42  },
+    { num: 40,  name: "Brock's Graveler",         rarity: "Uncommon",  cardType: "Pokemon", dex: 75  },
+    { num: 41,  name: "Brock's Lickitung",        rarity: "Uncommon",  cardType: "Pokemon", dex: 108 },
+    { num: 42,  name: "Erika's Dratini",          rarity: "Uncommon",  cardType: "Pokemon", dex: 147 },
+    { num: 43,  name: "Erika's Exeggcute",        rarity: "Uncommon",  cardType: "Pokemon", dex: 102 },
+    { num: 44,  name: "Erika's Exeggutor",        rarity: "Uncommon",  cardType: "Pokemon", dex: 103 },
+    { num: 45,  name: "Erika's Gloom",            rarity: "Uncommon",  cardType: "Pokemon", dex: 44  },
+    { num: 46,  name: "Erika's Gloom",            rarity: "Uncommon",  cardType: "Pokemon", dex: 44  },
+    { num: 47,  name: "Erika's Oddish",           rarity: "Uncommon",  cardType: "Pokemon", dex: 43  },
+    { num: 48,  name: "Erika's Weepinbell",       rarity: "Uncommon",  cardType: "Pokemon", dex: 70  },
+    { num: 49,  name: "Erika's Weepinbell",       rarity: "Uncommon",  cardType: "Pokemon", dex: 70  },
+    { num: 50,  name: "Lt. Surge's Magnemite",    rarity: "Uncommon",  cardType: "Pokemon", dex: 81  },
+    { num: 51,  name: "Lt. Surge's Raticate",     rarity: "Uncommon",  cardType: "Pokemon", dex: 20  },
+    { num: 52,  name: "Lt. Surge's Spearow",      rarity: "Uncommon",  cardType: "Pokemon", dex: 21  },
+    { num: 53,  name: "Misty's Poliwhirl",        rarity: "Uncommon",  cardType: "Pokemon", dex: 61  },
+    { num: 54,  name: "Misty's Psyduck",          rarity: "Uncommon",  cardType: "Pokemon", dex: 54  },
+    { num: 55,  name: "Misty's Seaking",          rarity: "Uncommon",  cardType: "Pokemon", dex: 119 },
+    { num: 56,  name: "Misty's Starmie",          rarity: "Uncommon",  cardType: "Pokemon", dex: 121 },
+    { num: 57,  name: "Misty's Tentacool",        rarity: "Uncommon",  cardType: "Pokemon", dex: 72  },
+    { num: 58,  name: "Sabrina's Haunter",        rarity: "Uncommon",  cardType: "Pokemon", dex: 93  },
+    { num: 59,  name: "Sabrina's Jynx",           rarity: "Uncommon",  cardType: "Pokemon", dex: 124 },
+    { num: 60,  name: "Sabrina's Slowbro",        rarity: "Uncommon",  cardType: "Pokemon", dex: 80  },
+    { num: 61,  name: "Blaine's Charmander",      rarity: "Common",    cardType: "Pokemon", dex: 4   },
+    { num: 62,  name: "Blaine's Growlithe",       rarity: "Common",    cardType: "Pokemon", dex: 58  },
+    { num: 63,  name: "Blaine's Ponyta",          rarity: "Common",    cardType: "Pokemon", dex: 77  },
+    { num: 64,  name: "Blaine's Tauros",          rarity: "Common",    cardType: "Pokemon", dex: 128 },
+    { num: 65,  name: "Blaine's Vulpix",          rarity: "Common",    cardType: "Pokemon", dex: 37  },
+    { num: 66,  name: "Brock's Geodude",          rarity: "Common",    cardType: "Pokemon", dex: 74  },
+    { num: 67,  name: "Brock's Mankey",           rarity: "Common",    cardType: "Pokemon", dex: 56  },
+    { num: 68,  name: "Brock's Mankey",           rarity: "Common",    cardType: "Pokemon", dex: 56  },
+    { num: 69,  name: "Brock's Onix",             rarity: "Common",    cardType: "Pokemon", dex: 95  },
+    { num: 70,  name: "Brock's Rhyhorn",          rarity: "Common",    cardType: "Pokemon", dex: 111 },
+    { num: 71,  name: "Brock's Sandshrew",        rarity: "Common",    cardType: "Pokemon", dex: 27  },
+    { num: 72,  name: "Brock's Sandshrew",        rarity: "Common",    cardType: "Pokemon", dex: 27  },
+    { num: 73,  name: "Brock's Vulpix",           rarity: "Common",    cardType: "Pokemon", dex: 37  },
+    { num: 74,  name: "Brock's Zubat",            rarity: "Common",    cardType: "Pokemon", dex: 41  },
+    { num: 75,  name: "Erika's Bellsprout",       rarity: "Common",    cardType: "Pokemon", dex: 69  },
+    { num: 76,  name: "Erika's Bellsprout",       rarity: "Common",    cardType: "Pokemon", dex: 69  },
+    { num: 77,  name: "Erika's Exeggcute",        rarity: "Common",    cardType: "Pokemon", dex: 102 },
+    { num: 78,  name: "Erika's Oddish",           rarity: "Common",    cardType: "Pokemon", dex: 43  },
+    { num: 79,  name: "Erika's Tangela",          rarity: "Common",    cardType: "Pokemon", dex: 114 },
+    { num: 80,  name: "Lt. Surge's Magnemite",    rarity: "Common",    cardType: "Pokemon", dex: 81  },
+    { num: 81,  name: "Lt. Surge's Pikachu",      rarity: "Common",    cardType: "Pokemon", dex: 25  },
+    { num: 82,  name: "Lt. Surge's Rattata",      rarity: "Common",    cardType: "Pokemon", dex: 19  },
+    { num: 83,  name: "Lt. Surge's Spearow",      rarity: "Common",    cardType: "Pokemon", dex: 21  },
+    { num: 84,  name: "Lt. Surge's Voltorb",      rarity: "Common",    cardType: "Pokemon", dex: 100 },
+    { num: 85,  name: "Misty's Goldeen",          rarity: "Common",    cardType: "Pokemon", dex: 118 },
+    { num: 86,  name: "Misty's Horsea",           rarity: "Common",    cardType: "Pokemon", dex: 116 },
+    { num: 87,  name: "Misty's Poliwag",          rarity: "Common",    cardType: "Pokemon", dex: 60  },
+    { num: 88,  name: "Misty's Seel",             rarity: "Common",    cardType: "Pokemon", dex: 86  },
+    { num: 89,  name: "Misty's Shellder",         rarity: "Common",    cardType: "Pokemon", dex: 90  },
+    { num: 90,  name: "Misty's Staryu",           rarity: "Common",    cardType: "Pokemon", dex: 120 },
+    { num: 91,  name: "Sabrina's Abra",           rarity: "Common",    cardType: "Pokemon", dex: 63  },
+    { num: 92,  name: "Sabrina's Drowzee",        rarity: "Common",    cardType: "Pokemon", dex: 96  },
+    { num: 93,  name: "Sabrina's Gastly",         rarity: "Common",    cardType: "Pokemon", dex: 92  },
+    { num: 94,  name: "Sabrina's Mr. Mime",       rarity: "Common",    cardType: "Pokemon", dex: 122 },
+    { num: 95,  name: "Sabrina's Slowpoke",       rarity: "Common",    cardType: "Pokemon", dex: 79  },
+    { num: 96,  name: "Sabrina's Venonat",        rarity: "Common",    cardType: "Pokemon", dex: 48  },
+    { num: 97,  name: "Blaine's Quiz #1",         rarity: "Rare",      cardType: "Trainer"           },
+    { num: 98,  name: "Brock",                    rarity: "Rare",      cardType: "Trainer"           },
+    { num: 99,  name: "Charity",                  rarity: "Rare",      cardType: "Trainer"           },
+    { num: 100, name: "Erika",                    rarity: "Rare",      cardType: "Trainer"           },
+    { num: 101, name: "Lt. Surge",                rarity: "Rare",      cardType: "Trainer"           },
+    { num: 102, name: "Misty",                    rarity: "Rare",      cardType: "Trainer"           },
+    { num: 103, name: "No Removal Gym",           rarity: "Rare",      cardType: "Trainer"           },
+    { num: 104, name: "The Rocket's Training Gym",rarity: "Rare",      cardType: "Trainer"           },
+    { num: 105, name: "Blaine's Last Resort",     rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 106, name: "Brock's Training Method",  rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 107, name: "Celadon City Gym",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 108, name: "Cerulean City Gym",        rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 109, name: "Erika's Maids",            rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 110, name: "Erika's Perfume",          rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 111, name: "Good Manners",             rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 112, name: "Lt. Surge's Treaty",       rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 113, name: "Minion of Team Rocket",    rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 114, name: "Misty's Wrath",            rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 115, name: "Pewter City Gym",          rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 116, name: "Recall",                   rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 117, name: "Sabrina's ESP",            rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 118, name: "Secret Mission",           rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 119, name: "Tickling Machine",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 120, name: "Vermilion City Gym",       rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 121, name: "Blaine's Gamble",          rarity: "Common",    cardType: "Trainer"           },
+    { num: 122, name: "Energy Flow",              rarity: "Common",    cardType: "Trainer"           },
+    { num: 123, name: "Misty's Duel",             rarity: "Common",    cardType: "Trainer"           },
+    { num: 124, name: "Narrow Gym",               rarity: "Common",    cardType: "Trainer"           },
+    { num: 125, name: "Sabrina's Gaze",           rarity: "Common",    cardType: "Trainer"           },
+    { num: 126, name: "Trash Exchange",           rarity: "Common",    cardType: "Trainer"           },
+    { num: 127, name: "Fighting Energy",          rarity: "Common",    cardType: "Energy"            },
+    { num: 128, name: "Fire Energy",              rarity: "Common",    cardType: "Energy"            },
+    { num: 129, name: "Grass Energy",             rarity: "Common",    cardType: "Energy"            },
+    { num: 130, name: "Lightning Energy",         rarity: "Common",    cardType: "Energy"            },
+    { num: 131, name: "Psychic Energy",           rarity: "Common",    cardType: "Energy"            },
+    { num: 132, name: "Water Energy",             rarity: "Common",    cardType: "Energy"            },
+  ];
+
+  const GYM_CHALLENGE_CARDS = [
+    { num: 1,   name: "Blaine's Arcanine",        rarity: "Holo Rare", cardType: "Pokemon", dex: 59  },
+    { num: 2,   name: "Blaine's Charizard",       rarity: "Holo Rare", cardType: "Pokemon", dex: 6   },
+    { num: 3,   name: "Brock's Ninetales",        rarity: "Holo Rare", cardType: "Pokemon", dex: 38  },
+    { num: 4,   name: "Erika's Venusaur",         rarity: "Holo Rare", cardType: "Pokemon", dex: 3   },
+    { num: 5,   name: "Giovanni's Gyarados",      rarity: "Holo Rare", cardType: "Pokemon", dex: 130 },
+    { num: 6,   name: "Giovanni's Machamp",       rarity: "Holo Rare", cardType: "Pokemon", dex: 68  },
+    { num: 7,   name: "Giovanni's Nidoking",      rarity: "Holo Rare", cardType: "Pokemon", dex: 34  },
+    { num: 8,   name: "Giovanni's Persian",       rarity: "Holo Rare", cardType: "Pokemon", dex: 53  },
+    { num: 9,   name: "Koga's Beedrill",          rarity: "Holo Rare", cardType: "Pokemon", dex: 15  },
+    { num: 10,  name: "Koga's Ditto",             rarity: "Holo Rare", cardType: "Pokemon", dex: 132 },
+    { num: 11,  name: "Lt. Surge's Raichu",       rarity: "Holo Rare", cardType: "Pokemon", dex: 26  },
+    { num: 12,  name: "Misty's Golduck",          rarity: "Holo Rare", cardType: "Pokemon", dex: 55  },
+    { num: 13,  name: "Misty's Gyarados",         rarity: "Holo Rare", cardType: "Pokemon", dex: 130 },
+    { num: 14,  name: "Rocket's Mewtwo",          rarity: "Holo Rare", cardType: "Pokemon", dex: 150 },
+    { num: 15,  name: "Rocket's Zapdos",          rarity: "Holo Rare", cardType: "Pokemon", dex: 145 },
+    { num: 16,  name: "Sabrina's Alakazam",       rarity: "Holo Rare", cardType: "Pokemon", dex: 65  },
+    { num: 17,  name: "Blaine",                   rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 18,  name: "Giovanni",                 rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 19,  name: "Koga",                     rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 20,  name: "Sabrina",                  rarity: "Holo Rare", cardType: "Trainer"           },
+    { num: 21,  name: "Blaine's Ninetales",       rarity: "Rare",      cardType: "Pokemon", dex: 38  },
+    { num: 22,  name: "Brock's Dugtrio",          rarity: "Rare",      cardType: "Pokemon", dex: 51  },
+    { num: 23,  name: "Giovanni's Nidoqueen",     rarity: "Rare",      cardType: "Pokemon", dex: 31  },
+    { num: 24,  name: "Giovanni's Pinsir",        rarity: "Rare",      cardType: "Pokemon", dex: 127 },
+    { num: 25,  name: "Koga's Arbok",             rarity: "Rare",      cardType: "Pokemon", dex: 24  },
+    { num: 26,  name: "Koga's Muk",              rarity: "Rare",      cardType: "Pokemon", dex: 89  },
+    { num: 27,  name: "Koga's Pidgeotto",         rarity: "Rare",      cardType: "Pokemon", dex: 17  },
+    { num: 28,  name: "Lt. Surge's Jolteon",      rarity: "Rare",      cardType: "Pokemon", dex: 135 },
+    { num: 29,  name: "Sabrina's Gengar",         rarity: "Rare",      cardType: "Pokemon", dex: 94  },
+    { num: 30,  name: "Sabrina's Golduck",        rarity: "Rare",      cardType: "Pokemon", dex: 55  },
+    { num: 31,  name: "Blaine's Charmeleon",      rarity: "Uncommon",  cardType: "Pokemon", dex: 5   },
+    { num: 32,  name: "Blaine's Dodrio",          rarity: "Uncommon",  cardType: "Pokemon", dex: 85  },
+    { num: 33,  name: "Blaine's Rapidash",        rarity: "Uncommon",  cardType: "Pokemon", dex: 78  },
+    { num: 34,  name: "Brock's Graveler",         rarity: "Uncommon",  cardType: "Pokemon", dex: 75  },
+    { num: 35,  name: "Brock's Primeape",         rarity: "Uncommon",  cardType: "Pokemon", dex: 57  },
+    { num: 36,  name: "Brock's Sandslash",        rarity: "Uncommon",  cardType: "Pokemon", dex: 28  },
+    { num: 37,  name: "Brock's Vulpix",           rarity: "Uncommon",  cardType: "Pokemon", dex: 37  },
+    { num: 38,  name: "Erika's Bellsprout",       rarity: "Uncommon",  cardType: "Pokemon", dex: 69  },
+    { num: 39,  name: "Erika's Bulbasaur",        rarity: "Uncommon",  cardType: "Pokemon", dex: 1   },
+    { num: 40,  name: "Erika's Clefairy",         rarity: "Uncommon",  cardType: "Pokemon", dex: 35  },
+    { num: 41,  name: "Erika's Ivysaur",          rarity: "Uncommon",  cardType: "Pokemon", dex: 2   },
+    { num: 42,  name: "Giovanni's Machoke",       rarity: "Uncommon",  cardType: "Pokemon", dex: 67  },
+    { num: 43,  name: "Giovanni's Meowth",        rarity: "Uncommon",  cardType: "Pokemon", dex: 52  },
+    { num: 44,  name: "Giovanni's Nidorina",      rarity: "Uncommon",  cardType: "Pokemon", dex: 30  },
+    { num: 45,  name: "Giovanni's Nidorino",      rarity: "Uncommon",  cardType: "Pokemon", dex: 33  },
+    { num: 46,  name: "Koga's Golbat",            rarity: "Uncommon",  cardType: "Pokemon", dex: 42  },
+    { num: 47,  name: "Koga's Kakuna",            rarity: "Uncommon",  cardType: "Pokemon", dex: 14  },
+    { num: 48,  name: "Koga's Koffing",           rarity: "Uncommon",  cardType: "Pokemon", dex: 109 },
+    { num: 49,  name: "Koga's Pidgey",            rarity: "Uncommon",  cardType: "Pokemon", dex: 16  },
+    { num: 50,  name: "Koga's Weezing",           rarity: "Uncommon",  cardType: "Pokemon", dex: 110 },
+    { num: 51,  name: "Lt. Surge's Eevee",        rarity: "Uncommon",  cardType: "Pokemon", dex: 133 },
+    { num: 52,  name: "Lt. Surge's Electrode",    rarity: "Uncommon",  cardType: "Pokemon", dex: 101 },
+    { num: 53,  name: "Lt. Surge's Raticate",     rarity: "Uncommon",  cardType: "Pokemon", dex: 20  },
+    { num: 54,  name: "Misty's Dewgong",          rarity: "Uncommon",  cardType: "Pokemon", dex: 87  },
+    { num: 55,  name: "Sabrina's Haunter",        rarity: "Uncommon",  cardType: "Pokemon", dex: 93  },
+    { num: 56,  name: "Sabrina's Hypno",          rarity: "Uncommon",  cardType: "Pokemon", dex: 97  },
+    { num: 57,  name: "Sabrina's Jynx",           rarity: "Uncommon",  cardType: "Pokemon", dex: 124 },
+    { num: 58,  name: "Sabrina's Kadabra",        rarity: "Uncommon",  cardType: "Pokemon", dex: 64  },
+    { num: 59,  name: "Sabrina's Mr. Mime",       rarity: "Uncommon",  cardType: "Pokemon", dex: 122 },
+    { num: 60,  name: "Blaine's Charmander",      rarity: "Common",    cardType: "Pokemon", dex: 4   },
+    { num: 61,  name: "Blaine's Doduo",           rarity: "Common",    cardType: "Pokemon", dex: 84  },
+    { num: 62,  name: "Blaine's Growlithe",       rarity: "Common",    cardType: "Pokemon", dex: 58  },
+    { num: 63,  name: "Blaine's Mankey",          rarity: "Common",    cardType: "Pokemon", dex: 56  },
+    { num: 64,  name: "Blaine's Ponyta",          rarity: "Common",    cardType: "Pokemon", dex: 77  },
+    { num: 65,  name: "Blaine's Rhyhorn",         rarity: "Common",    cardType: "Pokemon", dex: 111 },
+    { num: 66,  name: "Blaine's Vulpix",          rarity: "Common",    cardType: "Pokemon", dex: 37  },
+    { num: 67,  name: "Brock's Diglett",          rarity: "Common",    cardType: "Pokemon", dex: 50  },
+    { num: 68,  name: "Brock's Geodude",          rarity: "Common",    cardType: "Pokemon", dex: 74  },
+    { num: 69,  name: "Erika's Jigglypuff",       rarity: "Common",    cardType: "Pokemon", dex: 39  },
+    { num: 70,  name: "Erika's Oddish",           rarity: "Common",    cardType: "Pokemon", dex: 43  },
+    { num: 71,  name: "Erika's Paras",            rarity: "Common",    cardType: "Pokemon", dex: 46  },
+    { num: 72,  name: "Giovanni's Machop",        rarity: "Common",    cardType: "Pokemon", dex: 66  },
+    { num: 73,  name: "Giovanni's Magikarp",      rarity: "Common",    cardType: "Pokemon", dex: 129 },
+    { num: 74,  name: "Giovanni's Meowth",        rarity: "Common",    cardType: "Pokemon", dex: 52  },
+    { num: 75,  name: "Giovanni's Nidoran♀", rarity: "Common",    cardType: "Pokemon", dex: 29  },
+    { num: 76,  name: "Giovanni's Nidoran♂", rarity: "Common",    cardType: "Pokemon", dex: 32  },
+    { num: 77,  name: "Koga's Ekans",             rarity: "Common",    cardType: "Pokemon", dex: 23  },
+    { num: 78,  name: "Koga's Grimer",            rarity: "Common",    cardType: "Pokemon", dex: 88  },
+    { num: 79,  name: "Koga's Koffing",           rarity: "Common",    cardType: "Pokemon", dex: 109 },
+    { num: 80,  name: "Koga's Pidgey",            rarity: "Common",    cardType: "Pokemon", dex: 16  },
+    { num: 81,  name: "Koga's Tangela",           rarity: "Common",    cardType: "Pokemon", dex: 114 },
+    { num: 82,  name: "Koga's Weedle",            rarity: "Common",    cardType: "Pokemon", dex: 13  },
+    { num: 83,  name: "Koga's Zubat",             rarity: "Common",    cardType: "Pokemon", dex: 41  },
+    { num: 84,  name: "Lt. Surge's Pikachu",      rarity: "Common",    cardType: "Pokemon", dex: 25  },
+    { num: 85,  name: "Lt. Surge's Rattata",      rarity: "Common",    cardType: "Pokemon", dex: 19  },
+    { num: 86,  name: "Lt. Surge's Voltorb",      rarity: "Common",    cardType: "Pokemon", dex: 100 },
+    { num: 87,  name: "Misty's Horsea",           rarity: "Common",    cardType: "Pokemon", dex: 116 },
+    { num: 88,  name: "Misty's Magikarp",         rarity: "Common",    cardType: "Pokemon", dex: 129 },
+    { num: 89,  name: "Misty's Poliwag",          rarity: "Common",    cardType: "Pokemon", dex: 60  },
+    { num: 90,  name: "Misty's Psyduck",          rarity: "Common",    cardType: "Pokemon", dex: 54  },
+    { num: 91,  name: "Misty's Seel",             rarity: "Common",    cardType: "Pokemon", dex: 86  },
+    { num: 92,  name: "Misty's Staryu",           rarity: "Common",    cardType: "Pokemon", dex: 120 },
+    { num: 93,  name: "Sabrina's Abra",           rarity: "Common",    cardType: "Pokemon", dex: 63  },
+    { num: 94,  name: "Sabrina's Abra",           rarity: "Common",    cardType: "Pokemon", dex: 63  },
+    { num: 95,  name: "Sabrina's Drowzee",        rarity: "Common",    cardType: "Pokemon", dex: 96  },
+    { num: 96,  name: "Sabrina's Gastly",         rarity: "Common",    cardType: "Pokemon", dex: 92  },
+    { num: 97,  name: "Sabrina's Gastly",         rarity: "Common",    cardType: "Pokemon", dex: 92  },
+    { num: 98,  name: "Sabrina's Porygon",        rarity: "Common",    cardType: "Pokemon", dex: 137 },
+    { num: 99,  name: "Sabrina's Psyduck",        rarity: "Common",    cardType: "Pokemon", dex: 54  },
+    { num: 100, name: "Blaine",                   rarity: "Rare",      cardType: "Trainer"           },
+    { num: 101, name: "Brock's Protection",       rarity: "Rare",      cardType: "Trainer"           },
+    { num: 102, name: "Chaos Gym",                rarity: "Rare",      cardType: "Trainer"           },
+    { num: 103, name: "Erika's Kindness",         rarity: "Rare",      cardType: "Trainer"           },
+    { num: 104, name: "Giovanni",                 rarity: "Rare",      cardType: "Trainer"           },
+    { num: 105, name: "Giovanni's Last Resort",   rarity: "Rare",      cardType: "Trainer"           },
+    { num: 106, name: "Koga",                     rarity: "Rare",      cardType: "Trainer"           },
+    { num: 107, name: "Lt. Surge's Secret Plan",  rarity: "Rare",      cardType: "Trainer"           },
+    { num: 108, name: "Misty's Wish",             rarity: "Rare",      cardType: "Trainer"           },
+    { num: 109, name: "Resistance Gym",           rarity: "Rare",      cardType: "Trainer"           },
+    { num: 110, name: "Sabrina",                  rarity: "Rare",      cardType: "Trainer"           },
+    { num: 111, name: "Blaine's Quiz #2",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 112, name: "Blaine's Quiz #3",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 113, name: "Cinnabar City Gym",        rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 114, name: "Fuchsia City Gym",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 115, name: "Koga's Ninja Trick",       rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 116, name: "Master Ball",              rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 117, name: "Max Revive",               rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 118, name: "Misty's Tears",            rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 119, name: "Rocket's Minefield Gym",   rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 120, name: "Rocket's Secret Experiment",rarity:"Uncommon",  cardType: "Trainer"           },
+    { num: 121, name: "Sabrina's Psychic Control",rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 122, name: "Saffron City Gym",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 123, name: "Viridian City Gym",        rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 124, name: "Fervor",                   rarity: "Common",    cardType: "Trainer"           },
+    { num: 125, name: "Transparent Walls",        rarity: "Common",    cardType: "Trainer"           },
+    { num: 126, name: "Warp Point",               rarity: "Common",    cardType: "Trainer"           },
+    { num: 127, name: "Fighting Energy",          rarity: "Common",    cardType: "Energy"            },
+    { num: 128, name: "Fire Energy",              rarity: "Common",    cardType: "Energy"            },
+    { num: 129, name: "Grass Energy",             rarity: "Common",    cardType: "Energy"            },
+    { num: 130, name: "Lightning Energy",         rarity: "Common",    cardType: "Energy"            },
+    { num: 131, name: "Psychic Energy",           rarity: "Common",    cardType: "Energy"            },
+    { num: 132, name: "Water Energy",             rarity: "Common",    cardType: "Energy"            },
+  ];
+
+  const NEO_GENESIS_CARDS = [
+    { num: 1,   name: "Ampharos",               rarity: "Holo Rare", cardType: "Pokemon", dex: 181 },
+    { num: 2,   name: "Azumarill",              rarity: "Holo Rare", cardType: "Pokemon", dex: 184 },
+    { num: 3,   name: "Bellossom",              rarity: "Holo Rare", cardType: "Pokemon", dex: 182 },
+    { num: 4,   name: "Feraligatr",             rarity: "Holo Rare", cardType: "Pokemon", dex: 160 },
+    { num: 5,   name: "Feraligatr",             rarity: "Holo Rare", cardType: "Pokemon", dex: 160 },
+    { num: 6,   name: "Heracross",              rarity: "Holo Rare", cardType: "Pokemon", dex: 214 },
+    { num: 7,   name: "Jumpluff",               rarity: "Holo Rare", cardType: "Pokemon", dex: 189 },
+    { num: 8,   name: "Kingdra",                rarity: "Holo Rare", cardType: "Pokemon", dex: 230 },
+    { num: 9,   name: "Lugia",                  rarity: "Holo Rare", cardType: "Pokemon", dex: 249 },
+    { num: 10,  name: "Meganium",               rarity: "Holo Rare", cardType: "Pokemon", dex: 154 },
+    { num: 11,  name: "Meganium",               rarity: "Holo Rare", cardType: "Pokemon", dex: 154 },
+    { num: 12,  name: "Pichu",                  rarity: "Holo Rare", cardType: "Pokemon", dex: 172 },
+    { num: 13,  name: "Skarmory",               rarity: "Holo Rare", cardType: "Pokemon", dex: 227 },
+    { num: 14,  name: "Slowking",               rarity: "Holo Rare", cardType: "Pokemon", dex: 199 },
+    { num: 15,  name: "Steelix",                rarity: "Holo Rare", cardType: "Pokemon", dex: 208 },
+    { num: 16,  name: "Togetic",                rarity: "Holo Rare", cardType: "Pokemon", dex: 176 },
+    { num: 17,  name: "Typhlosion",             rarity: "Holo Rare", cardType: "Pokemon", dex: 157 },
+    { num: 18,  name: "Typhlosion",             rarity: "Holo Rare", cardType: "Pokemon", dex: 157 },
+    { num: 19,  name: "Metal Energy",           rarity: "Holo Rare", cardType: "Energy"           },
+    { num: 20,  name: "Cleffa",                 rarity: "Rare",      cardType: "Pokemon", dex: 173 },
+    { num: 21,  name: "Donphan",                rarity: "Rare",      cardType: "Pokemon", dex: 232 },
+    { num: 22,  name: "Elekid",                 rarity: "Rare",      cardType: "Pokemon", dex: 239 },
+    { num: 23,  name: "Magby",                  rarity: "Rare",      cardType: "Pokemon", dex: 240 },
+    { num: 24,  name: "Murkrow",                rarity: "Rare",      cardType: "Pokemon", dex: 198 },
+    { num: 25,  name: "Sneasel",                rarity: "Rare",      cardType: "Pokemon", dex: 215 },
+    { num: 26,  name: "Aipom",                  rarity: "Uncommon",  cardType: "Pokemon", dex: 190 },
+    { num: 27,  name: "Ariados",                rarity: "Uncommon",  cardType: "Pokemon", dex: 168 },
+    { num: 28,  name: "Bayleef",                rarity: "Uncommon",  cardType: "Pokemon", dex: 153 },
+    { num: 29,  name: "Bayleef",                rarity: "Uncommon",  cardType: "Pokemon", dex: 153 },
+    { num: 30,  name: "Clefairy",               rarity: "Uncommon",  cardType: "Pokemon", dex: 35  },
+    { num: 31,  name: "Croconaw",               rarity: "Uncommon",  cardType: "Pokemon", dex: 159 },
+    { num: 32,  name: "Croconaw",               rarity: "Uncommon",  cardType: "Pokemon", dex: 159 },
+    { num: 33,  name: "Electabuzz",             rarity: "Uncommon",  cardType: "Pokemon", dex: 125 },
+    { num: 34,  name: "Flaaffy",                rarity: "Uncommon",  cardType: "Pokemon", dex: 180 },
+    { num: 35,  name: "Furret",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 162 },
+    { num: 36,  name: "Gloom",                  rarity: "Uncommon",  cardType: "Pokemon", dex: 44  },
+    { num: 37,  name: "Granbull",               rarity: "Uncommon",  cardType: "Pokemon", dex: 210 },
+    { num: 38,  name: "Lanturn",                rarity: "Uncommon",  cardType: "Pokemon", dex: 171 },
+    { num: 39,  name: "Ledian",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 166 },
+    { num: 40,  name: "Magmar",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 126 },
+    { num: 41,  name: "Miltank",                rarity: "Uncommon",  cardType: "Pokemon", dex: 241 },
+    { num: 42,  name: "Noctowl",                rarity: "Uncommon",  cardType: "Pokemon", dex: 164 },
+    { num: 43,  name: "Phanpy",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 231 },
+    { num: 44,  name: "Piloswine",              rarity: "Uncommon",  cardType: "Pokemon", dex: 221 },
+    { num: 45,  name: "Quagsire",               rarity: "Uncommon",  cardType: "Pokemon", dex: 195 },
+    { num: 46,  name: "Quilava",                rarity: "Uncommon",  cardType: "Pokemon", dex: 156 },
+    { num: 47,  name: "Quilava",                rarity: "Uncommon",  cardType: "Pokemon", dex: 156 },
+    { num: 48,  name: "Seadra",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 117 },
+    { num: 49,  name: "Skiploom",               rarity: "Uncommon",  cardType: "Pokemon", dex: 188 },
+    { num: 50,  name: "Sunflora",               rarity: "Uncommon",  cardType: "Pokemon", dex: 192 },
+    { num: 51,  name: "Togepi",                 rarity: "Uncommon",  cardType: "Pokemon", dex: 175 },
+    { num: 52,  name: "Xatu",                   rarity: "Uncommon",  cardType: "Pokemon", dex: 178 },
+    { num: 53,  name: "Chikorita",              rarity: "Common",    cardType: "Pokemon", dex: 152 },
+    { num: 54,  name: "Chikorita",              rarity: "Common",    cardType: "Pokemon", dex: 152 },
+    { num: 55,  name: "Chinchou",               rarity: "Common",    cardType: "Pokemon", dex: 170 },
+    { num: 56,  name: "Cyndaquil",              rarity: "Common",    cardType: "Pokemon", dex: 155 },
+    { num: 57,  name: "Cyndaquil",              rarity: "Common",    cardType: "Pokemon", dex: 155 },
+    { num: 58,  name: "Girafarig",              rarity: "Common",    cardType: "Pokemon", dex: 203 },
+    { num: 59,  name: "Gligar",                 rarity: "Common",    cardType: "Pokemon", dex: 207 },
+    { num: 60,  name: "Hoothoot",               rarity: "Common",    cardType: "Pokemon", dex: 163 },
+    { num: 61,  name: "Hoppip",                 rarity: "Common",    cardType: "Pokemon", dex: 187 },
+    { num: 62,  name: "Horsea",                 rarity: "Common",    cardType: "Pokemon", dex: 116 },
+    { num: 63,  name: "Ledyba",                 rarity: "Common",    cardType: "Pokemon", dex: 165 },
+    { num: 64,  name: "Mantine",                rarity: "Common",    cardType: "Pokemon", dex: 226 },
+    { num: 65,  name: "Mareep",                 rarity: "Common",    cardType: "Pokemon", dex: 179 },
+    { num: 66,  name: "Marill",                 rarity: "Common",    cardType: "Pokemon", dex: 183 },
+    { num: 67,  name: "Natu",                   rarity: "Common",    cardType: "Pokemon", dex: 177 },
+    { num: 68,  name: "Oddish",                 rarity: "Common",    cardType: "Pokemon", dex: 43  },
+    { num: 69,  name: "Onix",                   rarity: "Common",    cardType: "Pokemon", dex: 95  },
+    { num: 70,  name: "Pikachu",                rarity: "Common",    cardType: "Pokemon", dex: 25  },
+    { num: 71,  name: "Sentret",                rarity: "Common",    cardType: "Pokemon", dex: 161 },
+    { num: 72,  name: "Shuckle",                rarity: "Common",    cardType: "Pokemon", dex: 213 },
+    { num: 73,  name: "Slowpoke",               rarity: "Common",    cardType: "Pokemon", dex: 79  },
+    { num: 74,  name: "Snubbull",               rarity: "Common",    cardType: "Pokemon", dex: 209 },
+    { num: 75,  name: "Spinarak",               rarity: "Common",    cardType: "Pokemon", dex: 167 },
+    { num: 76,  name: "Stantler",               rarity: "Common",    cardType: "Pokemon", dex: 234 },
+    { num: 77,  name: "Sudowoodo",              rarity: "Common",    cardType: "Pokemon", dex: 185 },
+    { num: 78,  name: "Sunkern",                rarity: "Common",    cardType: "Pokemon", dex: 191 },
+    { num: 79,  name: "Swinub",                 rarity: "Common",    cardType: "Pokemon", dex: 220 },
+    { num: 80,  name: "Totodile",               rarity: "Common",    cardType: "Pokemon", dex: 158 },
+    { num: 81,  name: "Totodile",               rarity: "Common",    cardType: "Pokemon", dex: 158 },
+    { num: 82,  name: "Wooper",                 rarity: "Common",    cardType: "Pokemon", dex: 194 },
+    { num: 83,  name: "Arcade Game",            rarity: "Rare",      cardType: "Trainer"           },
+    { num: 84,  name: "Ecogym",                 rarity: "Rare",      cardType: "Trainer"           },
+    { num: 85,  name: "Energy Charge",          rarity: "Rare",      cardType: "Trainer"           },
+    { num: 86,  name: "Focus Band",             rarity: "Rare",      cardType: "Trainer"           },
+    { num: 87,  name: "Mary",                   rarity: "Rare",      cardType: "Trainer"           },
+    { num: 88,  name: "PokéGear",               rarity: "Rare",      cardType: "Trainer"           },
+    { num: 89,  name: "Super Energy Retrieval", rarity: "Rare",      cardType: "Trainer"           },
+    { num: 90,  name: "Time Capsule",           rarity: "Rare",      cardType: "Trainer"           },
+    { num: 91,  name: "Bill's Teleporter",      rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 92,  name: "Card-Flip Game",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 93,  name: "Gold Berry",             rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 94,  name: "Miracle Berry",          rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 95,  name: "New Pokédex",            rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 96,  name: "Professor Elm",          rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 97,  name: "Sprout Tower",           rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 98,  name: "Super Scoop Up",         rarity: "Uncommon",  cardType: "Trainer"           },
+    { num: 99,  name: "Berry",                  rarity: "Common",    cardType: "Trainer"           },
+    { num: 100, name: "Double Gust",            rarity: "Common",    cardType: "Trainer"           },
+    { num: 101, name: "Moo-Moo Milk",           rarity: "Common",    cardType: "Trainer"           },
+    { num: 102, name: "Pokémon March",          rarity: "Common",    cardType: "Trainer"           },
+    { num: 103, name: "Super Rod",              rarity: "Common",    cardType: "Trainer"           },
+    { num: 104, name: "Darkness Energy",        rarity: "Rare",      cardType: "Energy"            },
+    { num: 105, name: "Recycle Energy",         rarity: "Rare",      cardType: "Energy"            },
+    { num: 106, name: "Fighting Energy",        rarity: "Common",    cardType: "Energy"            },
+    { num: 107, name: "Fire Energy",            rarity: "Common",    cardType: "Energy"            },
+    { num: 108, name: "Grass Energy",           rarity: "Common",    cardType: "Energy"            },
+    { num: 109, name: "Lightning Energy",       rarity: "Common",    cardType: "Energy"            },
+    { num: 110, name: "Psychic Energy",         rarity: "Common",    cardType: "Energy"            },
+    { num: 111, name: "Water Energy",           rarity: "Common",    cardType: "Energy"            },
+  ];
+
+  const SETS = {
+    base: {
+      id: "base",
+      name: "Base",
+      imgPath: "base",
+      imgExt: "jpg",
+      editions: [
+        { key: "1st",        label: "1st Ed"     },
+        { key: "shadowless", label: "Shadowless" },
+        { key: "unlimited",  label: "Unlimited"  },
+      ],
+      storageKey: "baseSetOwned_v1",
+      condKey: "baseSetConditions_v1",
+      priceKey: "baseSetPrices_v1",
+      editionsKey: "baseSetEditions_v1",
+      cards: BASE_CARDS,
+    },
+    jungle: {
+      id: "jungle",
+      name: "Jungle",
+      imgPath: "jungle",
+      imgExt: "png",
+      editions: [
+        { key: "1st",       label: "1st Ed"    },
+        { key: "unlimited", label: "Unlimited" },
+      ],
+      storageKey: "jungleOwned_v1",
+      condKey: "jungleConditions_v1",
+      priceKey: "junglePrices_v1",
+      editionsKey: "jungleEditions_v1",
+      cards: JUNGLE_CARDS,
+    },
+    fossil: {
+      id: "fossil",
+      name: "Fossil",
+      imgPath: "fossil",
+      imgExt: "png",
+      editions: [
+        { key: "1st",       label: "1st Ed"    },
+        { key: "unlimited", label: "Unlimited" },
+      ],
+      storageKey: "fossilOwned_v1",
+      condKey: "fossilConditions_v1",
+      priceKey: "fossilPrices_v1",
+      editionsKey: "fossilEditions_v1",
+      cards: FOSSIL_CARDS,
+    },
+    teamrocket: {
+      id: "teamrocket",
+      name: "Team Rocket",
+      imgPath: "teamrocket",
+      imgExt: "png",
+      editions: [
+        { key: "1st",       label: "1st Ed"    },
+        { key: "unlimited", label: "Unlimited" },
+      ],
+      storageKey: "teamRocketOwned_v1",
+      condKey: "teamRocketConditions_v1",
+      priceKey: "teamRocketPrices_v1",
+      editionsKey: "teamRocketEditions_v1",
+      cards: TEAM_ROCKET_CARDS,
+    },
+    gymheroes: {
+      id: "gymheroes",
+      name: "Gym Heroes",
+      imgPath: "gymheroes",
+      imgExt: "png",
+      editions: [
+        { key: "1st",       label: "1st Ed"    },
+        { key: "unlimited", label: "Unlimited" },
+      ],
+      storageKey: "gymHeroesOwned_v1",
+      condKey: "gymHeroesConditions_v1",
+      priceKey: "gymHeroesPrices_v1",
+      editionsKey: "gymHeroesEditions_v1",
+      cards: GYM_HEROES_CARDS,
+    },
+    gymchallenge: {
+      id: "gymchallenge",
+      name: "Gym Challenge",
+      imgPath: "gymchallenge",
+      imgExt: "png",
+      editions: [
+        { key: "1st",       label: "1st Ed"    },
+        { key: "unlimited", label: "Unlimited" },
+      ],
+      storageKey: "gymChallengeOwned_v1",
+      condKey: "gymChallengeConditions_v1",
+      priceKey: "gymChallengePrices_v1",
+      editionsKey: "gymChallengeEditions_v1",
+      cards: GYM_CHALLENGE_CARDS,
+    },
+    neogenesis: {
+      id: "neogenesis",
+      name: "Neo Genesis",
+      imgPath: "neogenesis",
+      imgExt: "png",
+      editions: [
+        { key: "1st",       label: "1st Ed"    },
+        { key: "unlimited", label: "Unlimited" },
+      ],
+      storageKey: "neoGenesisOwned_v1",
+      condKey: "neoGenesisConditions_v1",
+      priceKey: "neoGenesisPrices_v1",
+      editionsKey: "neoGenesisEditions_v1",
+      cards: NEO_GENESIS_CARDS,
+    },
+  };
+
+  // ─── STATE ────────────────────────────────────────────────────────────────────
+
+  let activeSetId = localStorage.getItem("activeSet") || "base";
+  let CARDS = [];
+  let owned = {}, conditions = {}, prices = {}, cardEditions = {};
+  let serverData = {};
+
+  // ─── SUPABASE SYNC ───────────────────────────────────────────────────────────
+  const SUPABASE_URL = 'https://endrukojwwefnurybqrm.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_W6M7YE7c9OomvH8wZob7uQ_Lii0pU0W';
+  const COLLECTION_ID = 'crystamber';
+  const sb = (window.supabase && SUPABASE_URL)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+    : null;
+
+  // Snapshot every set from localStorage into one blob (used to seed an empty cloud row)
+  function collectAllLocal() {
+    const all = {};
+    for (const id in SETS) {
+      const s = SETS[id];
+      all[id] = {
+        owned: loadOwned(s.storageKey),
+        conditions: loadJSON(s.condKey),
+        prices: loadJSON(s.priceKey),
+        cardEditions: loadJSON(s.editionsKey),
+      };
+    }
+    return all;
+  }
+
+  function editionLabel(setId, key) {
+    const ed = SETS[setId].editions.find(e => e.key === key);
+    return ed ? ed.label : "";
+  }
+
+  const RAW_CONDS = ["M", "NM", "LP", "MP", "HP", "DMG"];
+  const GRADED_CONDS = [
+    "PSA 10", "PSA 9", "PSA 8", "PSA 7",
+    "BGS 10", "BGS 9.5", "BGS 9",
+    "CGC 10", "CGC 9.5",
+  ];
+
+  function loadJSON(key) {
+    try {
+      const v = JSON.parse(localStorage.getItem(key) || "{}");
+      return v && typeof v === "object" ? v : {};
+    } catch (_) { return {}; }
+  }
+
+  function loadOwned(key) {
+    const raw = localStorage.getItem(key);
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const today = todayISO();
+        const out = {};
+        parsed.forEach(n => { out[n] = today; });
+        localStorage.setItem(key, JSON.stringify(out));
+        return out;
+      }
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_) { return {}; }
+  }
+
+  function loadSetState(setId) {
+    const s = SETS[setId];
+    CARDS = s.cards;
+    owned = loadOwned(s.storageKey);
+    conditions = loadJSON(s.condKey);
+    prices = loadJSON(s.priceKey);
+    cardEditions = loadJSON(s.editionsKey);
+  }
+
+  loadSetState(activeSetId);
+
+  // ─── STORAGE ─────────────────────────────────────────────────────────────────
+
+  function save() {
+    localStorage.setItem(SETS[activeSetId].storageKey, JSON.stringify(owned));
+    syncToServer();
+  }
+
+  function saveConditions() {
+    localStorage.setItem(SETS[activeSetId].condKey, JSON.stringify(conditions));
+    syncToServer();
+  }
+
+  function savePrices() {
+    localStorage.setItem(SETS[activeSetId].priceKey, JSON.stringify(prices));
+    syncToServer();
+  }
+
+  function saveCardEditions() {
+    localStorage.setItem(SETS[activeSetId].editionsKey, JSON.stringify(cardEditions));
+    syncToServer();
+  }
+
+  function syncToServer() {
+    serverData[activeSetId] = { owned, conditions, prices, cardEditions };
+    pushToServer();
+  }
+
+  function pushToServer() {
+    if (!sb) { setServerStatus(false); return; }
+    sb.from('collections')
+      .upsert({ id: COLLECTION_ID, data: serverData, updated_at: new Date().toISOString() })
+      .then(({ error }) => setServerStatus(!error))
+      .catch(() => setServerStatus(false));
+  }
+
+  function setServerStatus(connected) {
+    const el = document.getElementById('serverDot');
+    if (!el) return;
+    el.style.background = connected ? 'var(--success)' : 'var(--text-dim)';
+    el.title = connected
+      ? 'Cloud sync active · Supabase'
+      : 'Offline · changes saved locally, will sync when reconnected';
+  }
+
+  // ─── UTILITIES ────────────────────────────────────────────────────────────────
+
+  const pad = (n) => String(n).padStart(3, "0");
+
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function relTime(iso) {
+    if (!iso) return "";
+    const d = new Date(iso + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = Math.round((today - d) / 86400000);
+    if (days === 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 7) return days + " days ago";
+    if (days < 30) return Math.floor(days / 7) + "w ago";
+    if (days < 365) return Math.floor(days / 30) + "mo ago";
+    return Math.floor(days / 365) + "y ago";
+  }
+
+  function formatDuration(fromISO, toISO) {
+    const from = new Date(fromISO + "T00:00:00");
+    const to   = new Date(toISO   + "T00:00:00");
+    const days = Math.max(0, Math.round((to - from) / 86400000));
+    if (days === 0) return "less than a day";
+    if (days === 1) return "1 day";
+    if (days < 7)  return days + " days";
+    if (days < 30) { const w = Math.floor(days/7); return w === 1 ? "1 week" : w + "w"; }
+    if (days < 365){ const mo = Math.floor(days/30); return mo === 1 ? "1 month" : mo + "mo"; }
+    const years = Math.floor(days/365);
+    const remMo = Math.floor((days%365)/30);
+    if (remMo === 0) return years === 1 ? "1 year" : years + "y";
+    return `${years}y ${remMo}mo`;
+  }
+
+  const idrFmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+  function fmtIDR(n) {
+    if (n == null || isNaN(n)) return "";
+    return idrFmt.format(n);
+  }
+
+  function condClass(value) {
+    if (!value) return "unset";
+    if (RAW_CONDS.includes(value)) return "cond-" + value;
+    return "cond-graded";
+  }
+
+  function isOwned(num) {
+    return Object.prototype.hasOwnProperty.call(owned, num);
+  }
+
+  function escapeAttr(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // ─── UNDO ─────────────────────────────────────────────────────────────────────
+
+  let undoState  = null;
+  let undoTimer  = null;
+  const undoToast = document.getElementById("undoToast");
+
+  function showUndoToast(cardName) {
+    document.getElementById("undoToastMsg").textContent = `"${cardName}" removed`;
+    undoToast.classList.add("visible");
+    if (undoTimer) clearTimeout(undoTimer);
+    undoTimer = setTimeout(dismissUndo, 6000);
+  }
+
+  function dismissUndo() {
+    undoToast.classList.remove("visible");
+    undoState = null;
+    undoTimer = null;
+  }
+
+  function undoRemove() {
+    if (!undoState) return;
+    const { num, date, condition, price, edition } = undoState;
+    owned[num] = date;
+    if (condition !== undefined) conditions[num] = condition;
+    if (price !== undefined) prices[num] = price;
+    if (edition !== undefined) cardEditions[num] = edition;
+    save();
+    if (condition !== undefined) saveConditions();
+    if (price !== undefined) savePrices();
+    if (edition !== undefined) saveCardEditions();
+    undoToast.classList.remove("visible");
+    if (undoTimer) { clearTimeout(undoTimer); undoTimer = null; }
+    undoState = null;
+    replaceCardInDom(num);
+    updateProgress();
+    if (activeFilter === "owned" || activeFilter === "missing" || activeSort !== "card") render();
+  }
+
+  // ─── ACTIONS ─────────────────────────────────────────────────────────────────
+
+  function toggle(num) {
+    if (isOwned(num)) {
+      const card = CARDS.find(c => c.num === num);
+      undoState = {
+        num,
+        date:      owned[num],
+        condition: conditions[num],
+        price:     prices[num],
+        edition:   cardEditions[num],
+      };
+      delete owned[num];
+      if (conditions[num] !== undefined) { delete conditions[num]; saveConditions(); }
+      if (prices[num] !== undefined) { delete prices[num]; savePrices(); }
+      if (cardEditions[num] !== undefined) { delete cardEditions[num]; saveCardEditions(); }
+      save();
+      replaceCardInDom(num);
+      updateProgress();
+      if (activeFilter === "owned" || activeFilter === "missing" || activeSort !== "card") render();
+      showUndoToast(card ? card.name : `#${num}`);
+    } else {
+      if (undoState && undoState.num === num) dismissUndo();
+      owned[num] = todayISO();
+      save();
+      replaceCardInDom(num);
+      updateProgress();
+      if (activeFilter === "owned" || activeFilter === "missing" || activeSort !== "card") render();
+    }
+  }
+
+  function setDate(num, iso) {
+    if (!isOwned(num)) return;
+    owned[num] = iso;
+    save();
+    replaceCardInDom(num);
+    updateProgress();
+    if (activeSort !== "card") render();
+  }
+
+  function setCondition(num, value) {
+    if (!isOwned(num)) return;
+    if (!value) delete conditions[num];
+    else conditions[num] = value;
+    saveConditions();
+    replaceCardInDom(num);
+  }
+
+  function setPrice(num, value) {
+    if (!isOwned(num)) return;
+    if (value == null || value === "" || isNaN(value)) delete prices[num];
+    else prices[num] = Number(value);
+    savePrices();
+    replaceCardInDom(num);
+    updateProgress();
+  }
+
+  function setCardEdition(num, value) {
+    if (!isOwned(num)) return;
+    if (!value) delete cardEditions[num];
+    else cardEditions[num] = value;
+    saveCardEditions();
+    replaceCardInDom(num);
+  }
+
+  // ─── SET SWITCHER ─────────────────────────────────────────────────────────────
+
+  function switchSet(setId) {
+    if (setId === activeSetId) return;
+    activeSetId = setId;
+    localStorage.setItem("activeSet", setId);
+    loadSetState(setId);
+    activeFilter = "all";
+    activeSort = "dex";
+
+    const s = SETS[setId];
+    document.getElementById("setTitle").textContent = s.name;
+    document.getElementById("setSubtitle").textContent = `Crystamber · Pokemon TCG Collection Tracker · ${s.cards.length} cards`;
+    document.getElementById("totalCount").textContent = s.cards.length;
+
+    document.querySelectorAll(".set-tab").forEach(b =>
+      b.classList.toggle("active", b.dataset.set === setId)
+    );
+    document.querySelectorAll(".filter-btn").forEach(b =>
+      b.classList.toggle("active", b.dataset.filter === "all")
+    );
+    sortSelect.value = "dex";
+
+    updateProgress();
+    render();
+  }
+
+  document.getElementById("setTabs").addEventListener("click", (e) => {
+    const btn = e.target.closest(".set-tab");
+    if (btn) switchSet(btn.dataset.set);
+  });
+
+  // ─── PROGRESS ────────────────────────────────────────────────────────────────
+
+  function updateProgress() {
+    const keys = Object.keys(owned);
+    const n = keys.length;
+    ownedCountEl.textContent = n;
+    const pct = (n / CARDS.length) * 100;
+    progressFill.style.width = pct + "%";
+    ownedPctEl.textContent = `(${pct.toFixed(1)}%)`;
+
+    if (n === 0) {
+      latestPickupEl.textContent = "";
+      timeStatEl.textContent = "";
+      timeStatEl.className = "time-stat";
+      spendStatEl.textContent = "";
+      return;
+    }
+
+    let latestNum = null, latestDate = "", firstDate = "9999-99-99";
+    for (const [num, date] of Object.entries(owned)) {
+      if (date > latestDate) { latestDate = date; latestNum = +num; }
+      if (date < firstDate) { firstDate = date; }
+    }
+    const latestCard = CARDS.find(c => c.num === latestNum);
+    if (latestCard) {
+      latestPickupEl.innerHTML = `Latest pickup: <b>${latestCard.name}</b> · ${relTime(latestDate)}`;
+    }
+
+    const isComplete = n === CARDS.length;
+    if (isComplete) {
+      timeStatEl.innerHTML = `Completed in <b>${formatDuration(firstDate, latestDate)}</b> · 🏆`;
+      timeStatEl.className = "time-stat complete";
+    } else {
+      timeStatEl.innerHTML = `Collecting since <b>${fmtDate(firstDate)}</b> · ${formatDuration(firstDate, todayISO())} in`;
+      timeStatEl.className = "time-stat";
+    }
+
+    const priceVals = Object.values(prices).filter(v => typeof v === "number" && !isNaN(v));
+    const filled = priceVals.length;
+    if (filled === 0) {
+      spendStatEl.textContent = "";
+    } else {
+      const total = priceVals.reduce((a, b) => a + b, 0);
+      const avg = total / filled;
+      const note = filled < n ? ` <span style="opacity:0.6">(${filled} of ${n} priced)</span>` : "";
+      let html = `Spent <b>${fmtIDR(total)}</b>`;
+      if (filled > 1) html += ` · Avg <b>${fmtIDR(avg)}</b>`;
+      spendStatEl.innerHTML = html + note;
+    }
+  }
+
+  // ─── RENDER ───────────────────────────────────────────────────────────────────
+
+  let activeFilter = "all";
+  let activeSort = "dex";
+
+  const grid            = document.getElementById("grid");
+  const ownedCountEl    = document.getElementById("ownedCount");
+  const ownedPctEl      = document.getElementById("ownedPct");
+  const progressFill    = document.getElementById("progressFill");
+  const filtersEl       = document.getElementById("filters");
+  const sortSelect      = document.getElementById("sortSelect");
+  const latestPickupEl  = document.getElementById("latestPickup");
+  const timeStatEl      = document.getElementById("timeStat");
+  const spendStatEl     = document.getElementById("spendStat");
+
+  function getFilteredCards() {
+    let list = CARDS.slice();
+    if (activeFilter === "owned") list = list.filter(c => isOwned(c.num));
+    else if (activeFilter === "missing") list = list.filter(c => !isOwned(c.num));
+    else if (activeFilter !== "all") list = list.filter(c => c.rarity === activeFilter);
+
+    if (activeSort === "recent" || activeSort === "oldest") {
+      const ownedList   = list.filter(c =>  isOwned(c.num));
+      const missingList = list.filter(c => !isOwned(c.num));
+      ownedList.sort((a, b) => {
+        const cmp = owned[a.num].localeCompare(owned[b.num]);
+        return activeSort === "recent" ? -cmp : cmp;
+      });
+      missingList.sort((a, b) => a.num - b.num);
+      return [...ownedList, ...missingList];
+    }
+    if (activeSort === "dex") {
+      return list.sort((a, b) => {
+        const aDex = a.dex != null ? a.dex : Infinity;
+        const bDex = b.dex != null ? b.dex : Infinity;
+        if (aDex !== bDex) return aDex - bDex;
+        return a.num - b.num;
+      });
+    }
+    return list.sort((a, b) => a.num - b.num);
+  }
+
+  function replaceCardInDom(num) {
+    const cardEl = grid.querySelector(`[data-num="${num}"]`);
+    if (cardEl) cardEl.replaceWith(buildCard(CARDS.find(c => c.num === num)));
+  }
+
+  function buildCard(card) {
+    const isOwn = isOwned(card.num);
+    const el = document.createElement("div");
+    el.className = "card" + (isOwn ? " owned" : "");
+    el.dataset.num = card.num;
+    el.tabIndex = 0;
+    el.setAttribute("role", "button");
+    el.setAttribute("aria-pressed", String(isOwn));
+    el.setAttribute("aria-label", `${card.name}, card #${card.num}, ${card.rarity}, ${isOwn ? "owned" : "missing"}`);
+
+    const activeSet = SETS[activeSetId];
+    const imgSrc = activeSet.imgBase
+      ? `${activeSet.imgBase}/${card.num}.${activeSet.imgExt}`
+      : `${activeSet.imgPath}/${pad(card.num)}.${activeSet.imgExt}`;
+    const imgLoading = activeSet.imgBase ? "eager" : "lazy";
+    const dateLabel = isOwn ? fmtDate(owned[card.num]) : "";
+    const condValue = conditions[card.num] || "";
+    const condDisplay = condValue || "+ condition";
+    const priceValue = prices[card.num];
+    const hasPrice = typeof priceValue === "number" && !isNaN(priceValue);
+    const priceDisplay = hasPrice ? fmtIDR(priceValue) : "+ price";
+    const priceClass = hasPrice ? "" : "unset";
+    const editionValue = cardEditions[card.num] || "";
+    const editionDisplay = editionValue ? editionLabel(activeSetId, editionValue) : "+ edition";
+    const editionClass = editionValue ? "" : "unset";
+
+    el.innerHTML = `
+      <div class="card-image-wrap">
+        <span class="num-badge">#${card.num}</span>
+        <img src="${imgSrc}" alt="${escapeAttr(card.name)}" loading="${imgLoading}"
+             onerror="this.outerHTML='<div class=&quot;placeholder&quot;><div class=&quot;ph-num&quot;>#${card.num}</div><div class=&quot;ph-label&quot;>no image</div></div>'">
+        <div class="check-overlay" aria-hidden="true">✓</div>
+      </div>
+      <div class="card-info">
+        <div class="card-name">${card.name}</div>
+        <div class="card-meta">${card.rarity}${card.cardType !== "Pokemon" ? " · " + card.cardType : ""}</div>
+        ${!isOwn ? `<div class="card-cta">+ Add to collection</div>` : ""}
+        ${isOwn ? `<div class="card-date" title="Click to edit purchase date">${dateLabel}</div>` : ""}
+        ${isOwn ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
+        ${isOwn ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
+        ${isOwn ? `<span class="card-price ${priceClass}" title="Click to set price">${escapeAttr(priceDisplay)}</span>` : ""}
+      </div>
+    `;
+
+    el.addEventListener("click", (e) => {
+      if (e.target.closest(".card-date")) return;
+      if (e.target.closest(".card-edition")) return;
+      if (e.target.closest(".card-condition")) return;
+      if (e.target.closest(".card-price")) return;
+      toggle(card.num);
+    });
+    el.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(card.num); }
+    });
+
+    // Date editor
+    const dateEl = el.querySelector(".card-date");
+    if (dateEl) {
+      dateEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const wrap = document.createElement("div");
+        wrap.className = "card-date";
+        const input = document.createElement("input");
+        input.type = "date";
+        input.value = owned[card.num] || todayISO();
+        input.max = todayISO();
+        wrap.appendChild(input);
+        dateEl.replaceWith(wrap);
+        input.focus();
+        try { input.showPicker && input.showPicker(); } catch (_) {}
+
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          if (input.value && input.value !== owned[card.num]) {
+            setDate(card.num, input.value);
+          } else {
+            const reset = document.createElement("div");
+            reset.className = "card-date";
+            reset.title = "Click to edit purchase date";
+            reset.textContent = fmtDate(owned[card.num]);
+            wrap.replaceWith(reset);
+            reset.addEventListener("click", (e) => { e.stopPropagation(); dateEl.click(); });
+          }
+        };
+        input.addEventListener("change", commit);
+        input.addEventListener("blur", commit);
+        input.addEventListener("click", (e) => e.stopPropagation());
+        input.addEventListener("keydown", (e) => {
+          e.stopPropagation();
+          if (e.key === "Escape") { committed = true; input.blur(); }
+        });
+      });
+    }
+
+    // Edition editor
+    const editionEl = el.querySelector(".card-edition");
+    if (editionEl) {
+      editionEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const wrap = document.createElement("span");
+        wrap.className = "card-edition";
+        const select = document.createElement("select");
+        const current = cardEditions[card.num] || "";
+
+        const blank = document.createElement("option");
+        blank.value = ""; blank.textContent = "— unspecified —";
+        select.appendChild(blank);
+
+        for (const ed of SETS[activeSetId].editions) {
+          const opt = document.createElement("option");
+          opt.value = ed.key; opt.textContent = ed.label;
+          select.appendChild(opt);
+        }
+
+        select.value = current;
+        wrap.appendChild(select);
+        editionEl.replaceWith(wrap);
+        select.focus();
+        try { select.showPicker && select.showPicker(); } catch (_) {}
+
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          if (select.value !== current) setCardEdition(card.num, select.value);
+          else replaceCardInDom(card.num);
+        };
+        select.addEventListener("change", commit);
+        select.addEventListener("blur", commit);
+        select.addEventListener("click", (e) => e.stopPropagation());
+        select.addEventListener("keydown", (e) => {
+          e.stopPropagation();
+          if (e.key === "Escape") { committed = true; replaceCardInDom(card.num); }
+        });
+      });
+    }
+
+    // Condition editor
+    const condEl = el.querySelector(".card-condition");
+    if (condEl) {
+      condEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const wrap = document.createElement("span");
+        wrap.className = "card-condition";
+        const select = document.createElement("select");
+        const current = conditions[card.num] || "";
+
+        const blank = document.createElement("option");
+        blank.value = ""; blank.textContent = "— unspecified —";
+        select.appendChild(blank);
+
+        const rawGroup = document.createElement("optgroup");
+        rawGroup.label = "Raw / Ungraded";
+        for (const c of RAW_CONDS) {
+          const opt = document.createElement("option");
+          opt.value = c; opt.textContent = c;
+          rawGroup.appendChild(opt);
+        }
+        select.appendChild(rawGroup);
+
+        const gradedGroup = document.createElement("optgroup");
+        gradedGroup.label = "Graded";
+        for (const c of GRADED_CONDS) {
+          const opt = document.createElement("option");
+          opt.value = c; opt.textContent = c;
+          gradedGroup.appendChild(opt);
+        }
+        select.appendChild(gradedGroup);
+
+        select.value = current;
+        wrap.appendChild(select);
+        condEl.replaceWith(wrap);
+        select.focus();
+        try { select.showPicker && select.showPicker(); } catch (_) {}
+
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          if (select.value !== current) setCondition(card.num, select.value);
+          else replaceCardInDom(card.num);
+        };
+        select.addEventListener("change", commit);
+        select.addEventListener("blur", commit);
+        select.addEventListener("click", (e) => e.stopPropagation());
+        select.addEventListener("keydown", (e) => {
+          e.stopPropagation();
+          if (e.key === "Escape") { committed = true; replaceCardInDom(card.num); }
+        });
+      });
+    }
+
+    // Price editor
+    const priceEl = el.querySelector(".card-price");
+    if (priceEl) {
+      priceEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const wrap = document.createElement("span");
+        wrap.className = "card-price";
+        const input = document.createElement("input");
+        input.type = "number"; input.min = "0"; input.step = "1";
+        input.placeholder = "0"; input.inputMode = "numeric";
+        const current = typeof prices[card.num] === "number" ? prices[card.num] : "";
+        input.value = current;
+        wrap.appendChild(input);
+        priceEl.replaceWith(wrap);
+        input.focus(); input.select();
+
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          const v = input.value.trim();
+          if (v === "") setPrice(card.num, null);
+          else {
+            const n = Number(v);
+            if (!isNaN(n) && n >= 0) setPrice(card.num, n);
+            else replaceCardInDom(card.num);
+          }
+        };
+        input.addEventListener("change", commit);
+        input.addEventListener("blur", commit);
+        input.addEventListener("click", (e) => e.stopPropagation());
+        input.addEventListener("keydown", (e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          else if (e.key === "Escape") { committed = true; replaceCardInDom(card.num); }
+        });
+      });
+    }
+
+    return el;
+  }
+
+  function render() {
+    grid.innerHTML = "";
+    const list = getFilteredCards();
+    if (list.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = activeFilter === "owned"
+        ? "No cards collected yet — start checking some off!"
+        : "No cards match this filter.";
+      grid.appendChild(empty);
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    list.forEach(c => frag.appendChild(buildCard(c)));
+    grid.appendChild(frag);
+  }
+
+  // ─── EVENTS ───────────────────────────────────────────────────────────────────
+
+  filtersEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".filter-btn");
+    if (!btn) return;
+    activeFilter = btn.dataset.filter;
+    filtersEl.querySelectorAll(".filter-btn").forEach(b =>
+      b.classList.toggle("active", b === btn)
+    );
+    render();
+  });
+
+  sortSelect.addEventListener("change", () => {
+    activeSort = sortSelect.value;
+    render();
+  });
+
+  // ─── INIT ─────────────────────────────────────────────────────────────────────
+
+  // Sync set title/tab to saved activeSetId on load
+  const s = SETS[activeSetId];
+  document.getElementById("setTitle").textContent = s.name;
+  document.getElementById("setSubtitle").textContent = `Crystamber · Pokemon TCG Collection Tracker · ${s.cards.length} cards`;
+  document.getElementById("totalCount").textContent = s.cards.length;
+  document.querySelectorAll(".set-tab").forEach(b =>
+    b.classList.toggle("active", b.dataset.set === activeSetId)
+  );
+
+  updateProgress();
+  render();
+
+  // Load from Supabase — adopt cloud data if present, otherwise seed the cloud from
+  // this device's localStorage. Never blanks a local set the cloud doesn't have.
+  (async () => {
+    if (!sb) { setServerStatus(false); return; }
+    try {
+      const { data: row, error } = await sb
+        .from('collections')
+        .select('data')
+        .eq('id', COLLECTION_ID)
+        .maybeSingle();
+      if (error) { setServerStatus(false); return; }
+
+      const cloud = row && row.data;
+
+      // Cloud empty/new → push this device's full localStorage up as the seed
+      if (!cloud || typeof cloud !== 'object' || !Object.keys(cloud).length) {
+        serverData = collectAllLocal();
+        pushToServer();
+        return;
+      }
+
+      // Detect old single-set format vs new multi-set format
+      serverData = (cloud.owned && !cloud.base) ? { base: cloud } : cloud;
+
+      // Adopt cloud data for EVERY set, not just the active one. switchSet() reads
+      // each set back from localStorage, so we push all cloud sets down into
+      // localStorage here — otherwise only the set active at page load (default
+      // "base") would ever reflect the cloud. Only overwrite a local set when the
+      // cloud has NON-EMPTY data for it, so we never blank a set the cloud lacks.
+      for (const id in serverData) {
+        if (!SETS[id]) continue;
+        const d = serverData[id];
+        const hasData = d && (
+          Object.keys(d.owned || {}).length ||
+          Object.keys(d.conditions || {}).length ||
+          Object.keys(d.prices || {}).length ||
+          Object.keys(d.cardEditions || {}).length
+        );
+        if (!hasData) continue;
+        localStorage.setItem(SETS[id].storageKey,  JSON.stringify(d.owned        || {}));
+        localStorage.setItem(SETS[id].condKey,     JSON.stringify(d.conditions   || {}));
+        localStorage.setItem(SETS[id].priceKey,    JSON.stringify(d.prices       || {}));
+        localStorage.setItem(SETS[id].editionsKey, JSON.stringify(d.cardEditions || {}));
+        if (id === activeSetId) {
+          owned        = d.owned        || {};
+          conditions   = d.conditions   || {};
+          prices       = d.prices       || {};
+          cardEditions = d.cardEditions || {};
+        }
+      }
+
+      setServerStatus(true);
+      updateProgress();
+      render();
+    } catch (_) { setServerStatus(false); }
+  })();
+</script>
+</body>
+</html>
