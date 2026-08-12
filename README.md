@@ -22,10 +22,21 @@ Serves on port 3000 and reads/writes `collection.json`.
 
 ## Data
 
-- `collection.json` - local snapshot of owned cards by set, with acquisition dates. Personal data.
-- Supabase holds the synced copy, keyed by collection id.
+- `collection.json` - local snapshot of owned cards by set, with acquisition dates. Personal data. Only written by `server.js`, so it goes stale unless you run locally.
+- Supabase holds the synced copy in `public.collection_sets`, one row per `(collection_id, set_id)`.
 
-The Supabase URL and publishable key are inline in `index.html`. Publishable keys are client-side by design, so this is safe as long as row-level security stays on for the collections table.
+The Supabase URL and publishable key are inline in `index.html`. Publishable keys are client-side by design, and RLS scopes `anon` to `collection_id = 'crystamber'` only - select, insert and update, no delete. A write to any other collection id is rejected.
+
+### Sync model
+
+One row per set, not one blob for everything. Editing Jungle writes the Jungle row and nothing else, so a failed or half-built write can't take the other sets down with it.
+
+- `rev` and `updated_at` are server-managed by a `before update` trigger, so the client can't forge them.
+- Each device keeps the highest rev it has seen per set in `localStorage` under `crystamberRevs_v1`. On load it adopts a cloud row only when `cloud.rev > seen.rev`. Equal rev means this device wrote the current state, so it leaves it alone.
+- Because rev also increments on a clear, **deletions propagate**. Emptying a set on one device empties it everywhere.
+- Nothing is pushed until the first read resolves. A set edited before that read lands is treated as newer than the cloud and is never overwritten.
+- Failed writes stay queued and retry with exponential backoff to 30s. The status dot reports honestly: grey connecting, amber saving, green all saved, red failing with the set names and the error.
+- Simultaneous edits on two devices are last-write-wins, which is correct for a single user.
 
 ## Deploy
 

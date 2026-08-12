@@ -18,6 +18,8 @@
     --accent: #ffcb05;
     --accent-2: #3b4cca;
     --success: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -640,7 +642,7 @@
   <div class="grid" id="grid"></div>
 
   <footer>
-    <span id="serverDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-right:6px;vertical-align:middle;" title="Server not connected · run: node server.js"></span>
+    <span id="serverDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-right:6px;vertical-align:middle;" title="Connecting to cloud..."></span>
     Progress saves automatically in your browser.
   </footer>
 </div>
@@ -1473,29 +1475,85 @@
   let activeSetId = localStorage.getItem("activeSet") || "base";
   let CARDS = [];
   let owned = {}, conditions = {}, prices = {}, cardEditions = {};
-  let serverData = {};
 
   // ─── SUPABASE SYNC ───────────────────────────────────────────────────────────
-  const SUPABASE_URL = 'https://endrukojwwefnurybqrm.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_W6M7YE7c9OomvH8wZob7uQ_Lii0pU0W';
+  // One row per (collection, set) in collection_sets. Editing Jungle writes only
+  // the Jungle row, so a bad write can no longer take other sets down with it.
+  const SUPABASE_URL = 'https://guyrhkzmogqcnemwyilx.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_vwBr1SsV84I964WDAetFzA_Ow4p6e2L';
   const COLLECTION_ID = 'crystamber';
+  const REV_KEY = 'crystamberRevs_v1';   // { setId: rev } — highest rev this device has seen
+
   const sb = (window.supabase && SUPABASE_URL)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
     : null;
 
-  // Snapshot every set from localStorage into one blob (used to seed an empty cloud row)
-  function collectAllLocal() {
-    const all = {};
-    for (const id in SETS) {
-      const s = SETS[id];
-      all[id] = {
-        owned: loadOwned(s.storageKey),
-        conditions: loadJSON(s.condKey),
-        prices: loadJSON(s.priceKey),
-        cardEditions: loadJSON(s.editionsKey),
-      };
+  // Nothing may be pushed until the first read resolves — before that this device
+  // does not know what the cloud holds, and guessing is how sets get clobbered.
+  let cloudReady = false;
+  const pendingSets = new Set();
+  let syncError = null;
+  let flushTimer = null;
+  let backoff = 1000;
+
+  function localRevs() { return loadJSON(REV_KEY); }
+
+  function setLocalRev(setId, rev) {
+    const revs = localRevs();
+    revs[setId] = rev;
+    localStorage.setItem(REV_KEY, JSON.stringify(revs));
+  }
+
+  // Always read straight from localStorage rather than the live in-memory objects,
+  // so a queued set that is no longer active still pushes its own data.
+  function setPayload(setId) {
+    const s = SETS[setId];
+    return {
+      collection_id: COLLECTION_ID,
+      set_id:        setId,
+      owned:         loadOwned(s.storageKey),
+      conditions:    loadJSON(s.condKey),
+      prices:        loadJSON(s.priceKey),
+      card_editions: loadJSON(s.editionsKey),
+    };
+  }
+
+  function payloadHasData(p) {
+    return !!(Object.keys(p.owned).length || Object.keys(p.conditions).length
+           || Object.keys(p.prices).length || Object.keys(p.card_editions).length);
+  }
+
+  function queueSet(setId) {
+    pendingSets.add(setId);
+    scheduleFlush(0);
+    refreshStatus();
+  }
+
+  function scheduleFlush(delay) {
+    if (flushTimer) return;
+    flushTimer = setTimeout(() => { flushTimer = null; flush(); }, delay);
+  }
+
+  async function flush() {
+    if (!sb || !cloudReady || !pendingSets.size) { refreshStatus(); return; }
+    const batch = [...pendingSets];
+    try {
+      const { data, error } = await sb
+        .from('collection_sets')
+        .upsert(batch.map(setPayload), { onConflict: 'collection_id,set_id' })
+        .select('set_id, rev');
+      if (error) throw error;
+      batch.forEach(id => pendingSets.delete(id));
+      (data || []).forEach(r => setLocalRev(r.set_id, r.rev));
+      syncError = null;
+      backoff = 1000;
+    } catch (err) {
+      // Keep the batch queued and actually come back for it.
+      syncError = err;
+      backoff = Math.min(backoff * 2, 30000);
+      scheduleFlush(backoff);
     }
-    return all;
+    refreshStatus();
   }
 
   function editionLabel(setId, key) {
@@ -1548,44 +1606,49 @@
 
   function save() {
     localStorage.setItem(SETS[activeSetId].storageKey, JSON.stringify(owned));
-    syncToServer();
+    queueSet(activeSetId);
   }
 
   function saveConditions() {
     localStorage.setItem(SETS[activeSetId].condKey, JSON.stringify(conditions));
-    syncToServer();
+    queueSet(activeSetId);
   }
 
   function savePrices() {
     localStorage.setItem(SETS[activeSetId].priceKey, JSON.stringify(prices));
-    syncToServer();
+    queueSet(activeSetId);
   }
 
   function saveCardEditions() {
     localStorage.setItem(SETS[activeSetId].editionsKey, JSON.stringify(cardEditions));
-    syncToServer();
+    queueSet(activeSetId);
   }
 
-  function syncToServer() {
-    serverData[activeSetId] = { owned, conditions, prices, cardEditions };
-    pushToServer();
-  }
-
-  function pushToServer() {
-    if (!sb) { setServerStatus(false); return; }
-    sb.from('collections')
-      .upsert({ id: COLLECTION_ID, data: serverData, updated_at: new Date().toISOString() })
-      .then(({ error }) => setServerStatus(!error))
-      .catch(() => setServerStatus(false));
-  }
-
-  function setServerStatus(connected) {
+  // The dot tells the truth: grey = not connected yet, amber = unsaved work in
+  // flight, red = writes are failing and how many sets are stranded.
+  function refreshStatus() {
     const el = document.getElementById('serverDot');
     if (!el) return;
-    el.style.background = connected ? 'var(--success)' : 'var(--text-dim)';
-    el.title = connected
-      ? 'Cloud sync active · Supabase'
-      : 'Offline · changes saved locally, will sync when reconnected';
+    let color, title;
+    if (!sb) {
+      color = 'var(--danger)';
+      title = 'No cloud sync - the Supabase library failed to load. Changes are local to this browser only.';
+    } else if (syncError) {
+      const msg = (syncError && syncError.message) ? syncError.message : String(syncError);
+      color = 'var(--danger)';
+      title = `Sync failing - ${pendingSets.size} set(s) not saved to cloud [${[...pendingSets].join(', ')}]. ${msg}. Retrying.`;
+    } else if (!cloudReady) {
+      color = 'var(--text-dim)';
+      title = 'Connecting to cloud...';
+    } else if (pendingSets.size) {
+      color = 'var(--warn)';
+      title = `Saving ${pendingSets.size} set(s)...`;
+    } else {
+      color = 'var(--success)';
+      title = 'Cloud sync active - every set saved';
+    }
+    el.style.background = color;
+    el.title = title;
   }
 
   // ─── UTILITIES ────────────────────────────────────────────────────────────────
@@ -2170,62 +2233,65 @@
   updateProgress();
   render();
 
-  // Load from Supabase — adopt cloud data if present, otherwise seed the cloud from
-  // this device's localStorage. Never blanks a local set the cloud doesn't have.
-  (async () => {
-    if (!sb) { setServerStatus(false); return; }
+  // Pull every set for this collection, then adopt only the rows the cloud has
+  // actually moved past. rev is server-managed, so "cloud rev higher than the
+  // highest rev this device has seen" is the one trustworthy signal that another
+  // device wrote something. Because rev also increments on a clear, deleting a
+  // card now propagates — the old hasData guard silently made that impossible.
+  // Genuine simultaneous edits are last-write-wins, correct for a single user.
+  async function initialLoad() {
+    if (!sb) { refreshStatus(); return; }
+    refreshStatus();
     try {
-      const { data: row, error } = await sb
-        .from('collections')
-        .select('data')
-        .eq('id', COLLECTION_ID)
-        .maybeSingle();
-      if (error) { setServerStatus(false); return; }
+      const { data: rows, error } = await sb
+        .from('collection_sets')
+        .select('set_id, owned, conditions, prices, card_editions, rev')
+        .eq('collection_id', COLLECTION_ID);
+      if (error) throw error;
 
-      const cloud = row && row.data;
+      const seen = localRevs();
+      const inCloud = new Set();
 
-      // Cloud empty/new → push this device's full localStorage up as the seed
-      if (!cloud || typeof cloud !== 'object' || !Object.keys(cloud).length) {
-        serverData = collectAllLocal();
-        pushToServer();
-        return;
-      }
-
-      // Detect old single-set format vs new multi-set format
-      serverData = (cloud.owned && !cloud.base) ? { base: cloud } : cloud;
-
-      // Adopt cloud data for EVERY set, not just the active one. switchSet() reads
-      // each set back from localStorage, so we push all cloud sets down into
-      // localStorage here — otherwise only the set active at page load (default
-      // "base") would ever reflect the cloud. Only overwrite a local set when the
-      // cloud has NON-EMPTY data for it, so we never blank a set the cloud lacks.
-      for (const id in serverData) {
+      for (const row of (rows || [])) {
+        const id = row.set_id;
         if (!SETS[id]) continue;
-        const d = serverData[id];
-        const hasData = d && (
-          Object.keys(d.owned || {}).length ||
-          Object.keys(d.conditions || {}).length ||
-          Object.keys(d.prices || {}).length ||
-          Object.keys(d.cardEditions || {}).length
-        );
-        if (!hasData) continue;
-        localStorage.setItem(SETS[id].storageKey,  JSON.stringify(d.owned        || {}));
-        localStorage.setItem(SETS[id].condKey,     JSON.stringify(d.conditions   || {}));
-        localStorage.setItem(SETS[id].priceKey,    JSON.stringify(d.prices       || {}));
-        localStorage.setItem(SETS[id].editionsKey, JSON.stringify(d.cardEditions || {}));
-        if (id === activeSetId) {
-          owned        = d.owned        || {};
-          conditions   = d.conditions   || {};
-          prices       = d.prices       || {};
-          cardEditions = d.cardEditions || {};
-        }
+        inCloud.add(id);
+        // Edited before this read landed → local is newer than anything the
+        // cloud can tell us. Never overwrite it.
+        if (pendingSets.has(id)) continue;
+        if (row.rev <= (seen[id] || 0)) continue;
+        localStorage.setItem(SETS[id].storageKey,  JSON.stringify(row.owned         || {}));
+        localStorage.setItem(SETS[id].condKey,     JSON.stringify(row.conditions    || {}));
+        localStorage.setItem(SETS[id].priceKey,    JSON.stringify(row.prices        || {}));
+        localStorage.setItem(SETS[id].editionsKey, JSON.stringify(row.card_editions || {}));
+        setLocalRev(id, row.rev);
+        if (id === activeSetId) loadSetState(id);
       }
 
-      setServerStatus(true);
+      cloudReady = true;
+      syncError = null;
+      backoff = 1000;
+
+      // Sets this device holds that the cloud has never seen get seeded upward.
+      for (const id in SETS) {
+        if (inCloud.has(id)) continue;
+        if (payloadHasData(setPayload(id))) pendingSets.add(id);
+      }
+      if (pendingSets.size) scheduleFlush(0);
+
       updateProgress();
       render();
-    } catch (_) { setServerStatus(false); }
-  })();
+      refreshStatus();
+    } catch (err) {
+      // Reads retry as well, otherwise a page opened offline never syncs at all.
+      syncError = err;
+      refreshStatus();
+      backoff = Math.min(backoff * 2, 30000);
+      setTimeout(initialLoad, backoff);
+    }
+  }
+
+  initialLoad();
 </script>
 </body>
 </html>
