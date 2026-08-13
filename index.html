@@ -1523,6 +1523,31 @@
            || Object.keys(p.prices).length || Object.keys(p.card_editions).length);
   }
 
+  function writeSetLocal(setId, d) {
+    const s = SETS[setId];
+    localStorage.setItem(s.storageKey,  JSON.stringify(d.owned         || {}));
+    localStorage.setItem(s.condKey,     JSON.stringify(d.conditions    || {}));
+    localStorage.setItem(s.priceKey,    JSON.stringify(d.prices        || {}));
+    localStorage.setItem(s.editionsKey, JSON.stringify(d.card_editions || {}));
+  }
+
+  // Used only on first contact for a set. A card owned on either side is owned,
+  // so nothing gets dropped; the earlier acquisition date wins because that is
+  // the true one. Local wins a metadata clash — it is the side that never synced.
+  function unionMerge(local, cloud) {
+    const owned = Object.assign({}, cloud.owned || {});
+    for (const num in local.owned) {
+      const mine = local.owned[num], theirs = owned[num];
+      if (theirs == null || (mine && mine < theirs)) owned[num] = mine;
+    }
+    return {
+      owned,
+      conditions:    Object.assign({}, cloud.conditions    || {}, local.conditions),
+      prices:        Object.assign({}, cloud.prices        || {}, local.prices),
+      card_editions: Object.assign({}, cloud.card_editions || {}, local.card_editions),
+    };
+  }
+
   function queueSet(setId) {
     pendingSets.add(setId);
     scheduleFlush(0);
@@ -2259,11 +2284,25 @@
         // Edited before this read landed → local is newer than anything the
         // cloud can tell us. Never overwrite it.
         if (pendingSets.has(id)) continue;
+
+        // First contact: this set has no recorded rev, so this device has never
+        // synced under the per-set scheme and may hold work the cloud never got.
+        // rev cannot see that, so union the two sides instead of letting either
+        // win. This is what makes it safe to open the app on a device whose
+        // edits were stranded by an outage.
+        if (!(id in seen)) {
+          const local = setPayload(id);
+          if (payloadHasData(local)) {
+            writeSetLocal(id, unionMerge(local, row));
+            setLocalRev(id, row.rev);
+            pendingSets.add(id);              // send the union back up
+            if (id === activeSetId) loadSetState(id);
+            continue;
+          }
+        }
+
         if (row.rev <= (seen[id] || 0)) continue;
-        localStorage.setItem(SETS[id].storageKey,  JSON.stringify(row.owned         || {}));
-        localStorage.setItem(SETS[id].condKey,     JSON.stringify(row.conditions    || {}));
-        localStorage.setItem(SETS[id].priceKey,    JSON.stringify(row.prices        || {}));
-        localStorage.setItem(SETS[id].editionsKey, JSON.stringify(row.card_editions || {}));
+        writeSetLocal(id, row);
         setLocalRev(id, row.rev);
         if (id === activeSetId) loadSetState(id);
       }

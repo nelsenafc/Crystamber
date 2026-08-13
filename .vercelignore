@@ -4,3 +4,4 @@ collection.json
 .vercel
 .env.local
 .env*
+backup_old_supabase_*.json
