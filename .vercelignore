@@ -5,3 +5,4 @@ collection.json
 .env.local
 .env*
 backup_old_supabase_*.json
+backup_*.json
