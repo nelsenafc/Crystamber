@@ -1491,10 +1491,12 @@
   // Nothing may be pushed until the first read resolves — before that this device
   // does not know what the cloud holds, and guessing is how sets get clobbered.
   let cloudReady = false;
+  let usingSavedCollection = false;
   const pendingSets = new Set();
   let syncError = null;
   let flushTimer = null;
   let backoff = 1000;
+  const SEED_URL = 'collection-seed.json';
 
   function localRevs() { return loadJSON(REV_KEY); }
 
@@ -1549,6 +1551,8 @@
   }
 
   function queueSet(setId) {
+    // Seed/local-only mode never talks to the dead host.
+    if (usingSavedCollection) { refreshStatus(); return; }
     pendingSets.add(setId);
     scheduleFlush(0);
     refreshStatus();
@@ -1560,7 +1564,10 @@
   }
 
   async function flush() {
-    if (!sb || !cloudReady || !pendingSets.size) { refreshStatus(); return; }
+    if (usingSavedCollection || !sb || !cloudReady || !pendingSets.size) {
+      refreshStatus();
+      return;
+    }
     const batch = [...pendingSets];
     try {
       const { data, error } = await sb
@@ -1650,12 +1657,16 @@
   }
 
   // The dot tells the truth: grey = not connected yet, amber = unsaved work in
-  // flight, red = writes are failing and how many sets are stranded.
+  // flight, red = writes are failing and how many sets are stranded, green
+  // "Using saved collection" = seed/local only (cloud is gone or timed out).
   function refreshStatus() {
     const el = document.getElementById('serverDot');
     if (!el) return;
     let color, title;
-    if (!sb) {
+    if (usingSavedCollection) {
+      color = 'var(--success)';
+      title = 'Using saved collection';
+    } else if (!sb) {
       color = 'var(--danger)';
       title = 'No cloud sync - the Supabase library failed to load. Changes are local to this browser only.';
     } else if (syncError) {
@@ -2264,69 +2275,115 @@
   // device wrote something. Because rev also increments on a clear, deleting a
   // card now propagates — the old hasData guard silently made that impossible.
   // Genuine simultaneous edits are last-write-wins, correct for a single user.
-  async function initialLoad() {
-    if (!sb) { refreshStatus(); return; }
-    refreshStatus();
-    try {
-      const { data: rows, error } = await sb
-        .from('collection_sets')
-        .select('set_id, owned, conditions, prices, card_editions, rev')
-        .eq('collection_id', COLLECTION_ID);
-      if (error) throw error;
+  // Same adoption rules as a successful collection_sets select: first contact
+  // unions local extras with the incoming row; a higher rev replaces; a set
+  // the user already edited during this load is left alone.
+  function applyCollectionRows(rows, persistToCloud) {
+    const seen = localRevs();
+    const inRows = new Set();
 
-      const seen = localRevs();
-      const inCloud = new Set();
+    for (const row of (rows || [])) {
+      const id = row.set_id;
+      if (!SETS[id]) continue;
+      inRows.add(id);
+      if (pendingSets.has(id)) continue;
 
-      for (const row of (rows || [])) {
-        const id = row.set_id;
-        if (!SETS[id]) continue;
-        inCloud.add(id);
-        // Edited before this read landed → local is newer than anything the
-        // cloud can tell us. Never overwrite it.
-        if (pendingSets.has(id)) continue;
-
-        // First contact: this set has no recorded rev, so this device has never
-        // synced under the per-set scheme and may hold work the cloud never got.
-        // rev cannot see that, so union the two sides instead of letting either
-        // win. This is what makes it safe to open the app on a device whose
-        // edits were stranded by an outage.
-        if (!(id in seen)) {
-          const local = setPayload(id);
-          if (payloadHasData(local)) {
-            writeSetLocal(id, unionMerge(local, row));
-            setLocalRev(id, row.rev);
-            pendingSets.add(id);              // send the union back up
-            if (id === activeSetId) loadSetState(id);
-            continue;
-          }
+      if (!(id in seen)) {
+        const local = setPayload(id);
+        if (payloadHasData(local)) {
+          writeSetLocal(id, unionMerge(local, row));
+          if (row.rev != null) setLocalRev(id, row.rev);
+          if (persistToCloud) pendingSets.add(id);
+          if (id === activeSetId) loadSetState(id);
+          continue;
         }
-
-        if (row.rev <= (seen[id] || 0)) continue;
-        writeSetLocal(id, row);
-        setLocalRev(id, row.rev);
-        if (id === activeSetId) loadSetState(id);
       }
 
+      if ((row.rev || 0) <= (seen[id] || 0)) continue;
+      // Static seed is a snapshot, not a live cloud write. Union so cards
+      // this device already holds and the file lacks are not wiped.
+      if (!persistToCloud) {
+        const local = setPayload(id);
+        if (payloadHasData(local)) {
+          writeSetLocal(id, unionMerge(local, row));
+          if (row.rev != null) setLocalRev(id, row.rev);
+          if (id === activeSetId) loadSetState(id);
+          continue;
+        }
+      }
+      writeSetLocal(id, row);
+      if (row.rev != null) setLocalRev(id, row.rev);
+      if (id === activeSetId) loadSetState(id);
+    }
+
+    if (persistToCloud) {
       cloudReady = true;
+      usingSavedCollection = false;
       syncError = null;
       backoff = 1000;
-
-      // Sets this device holds that the cloud has never seen get seeded upward.
       for (const id in SETS) {
-        if (inCloud.has(id)) continue;
+        if (inRows.has(id)) continue;
         if (payloadHasData(setPayload(id))) pendingSets.add(id);
       }
       if (pendingSets.size) scheduleFlush(0);
+    }
 
-      updateProgress();
-      render();
+    updateProgress();
+    render();
+    refreshStatus();
+  }
+
+  async function loadSeedRows() {
+    const res = await fetch(SEED_URL);
+    if (!res.ok) throw new Error('Saved collection unavailable');
+    const rows = await res.json();
+    if (!Array.isArray(rows)) throw new Error('Saved collection unavailable');
+    return rows;
+  }
+
+  async function hydrateFromSeed() {
+    const rows = await loadSeedRows();
+    usingSavedCollection = true;
+    cloudReady = false;
+    syncError = null;
+    applyCollectionRows(rows, false);
+  }
+
+  function withTimeout(promise, ms) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('Cloud timeout')), ms);
+      promise.then(
+        v => { clearTimeout(t); resolve(v); },
+        e => { clearTimeout(t); reject(e); }
+      );
+    });
+  }
+
+  async function initialLoad() {
+    refreshStatus();
+    if (sb) {
+      try {
+        const { data: rows, error } = await withTimeout(
+          sb.from('collection_sets')
+            .select('set_id, owned, conditions, prices, card_editions, rev')
+            .eq('collection_id', COLLECTION_ID),
+          4000
+        );
+        if (error) throw error;
+        applyCollectionRows(rows, true);
+        return;
+      } catch (_) {
+        // Host is gone (NXDOMAIN) or the read failed. Fall through to the
+        // shipped seed once — do not retry the dead project forever.
+      }
+    }
+    try {
+      await hydrateFromSeed();
+    } catch (_) {
+      usingSavedCollection = true;
+      cloudReady = false;
+      syncError = null;
       refreshStatus();
-    } catch (err) {
-      // Reads retry as well, otherwise a page opened offline never syncs at all.
-      syncError = err;
-      refreshStatus();
-      backoff = Math.min(backoff * 2, 30000);
-      setTimeout(initialLoad, backoff);
     }
   }
 
