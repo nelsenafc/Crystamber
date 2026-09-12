@@ -6,3 +6,4 @@ collection.json
 .env*
 backup_old_supabase_*.json
 backup_*.json
+.github

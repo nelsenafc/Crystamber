@@ -581,9 +581,91 @@
     letter-spacing: 0.02em;
   }
   #undoToast button:hover { opacity: 0.85; }
+
+  /* Sync banner. The old signal was a title tooltip on an 8px dot in the footer,
+     which is invisible on a phone [no hover, and you never scroll that far]. That
+     is how a two-week outage went unnoticed. This sits at the top, is unmissable,
+     and only appears when something is actually wrong. */
+  #syncBanner {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 600;
+    text-align: left;
+    color: #1a1a2e;
+    background: var(--warn);
+  }
+  #syncBanner.show { display: block; }
+  #syncBanner.bad  { background: var(--danger); }
+  /* Export has to be reachable without scrolling past 102 cards. Burying the
+     sync signal in the footer is what hid this outage for two weeks; burying the
+     way to rescue your data down there would be the same mistake twice. */
+  .header-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .header-tools { flex: 0 0 auto; }
+  .header-tools button {
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-left: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    min-height: 34px;          /* comfortable tap target on a phone */
+  }
+  .header-tools button:hover { color: var(--success); border-color: var(--success); }
+
+  #syncBanner .banner-action {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 5px 11px;
+    border: 1px solid rgba(26,26,46,0.55);
+    border-radius: 6px;
+    background: rgba(255,255,255,0.35);
+    color: #1a1a2e;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .footer-tools { display: inline-block; margin-left: 10px; }
+  .footer-tools button {
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    border-radius: 5px;
+    padding: 3px 9px;
+    margin-left: 5px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .footer-tools button:hover { color: var(--success); border-color: var(--success); }
+
+  #syncBanner .detail {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 2px;
+    word-break: break-word;
+  }
 </style>
 </head>
 <body>
+<div id="syncBanner"></div>
 <div id="undoToast">
   <span id="undoToastMsg">Card removed from collection</span>
   <button onclick="undoRemove()">Undo</button>
@@ -591,7 +673,13 @@
 <div class="container">
 
   <header>
-    <h1 id="setTitle">Base</h1>
+    <div class="header-top">
+      <h1 id="setTitle">Base</h1>
+      <span class="header-tools">
+        <button type="button" onclick="exportCollection()">Export backup</button>
+        <button type="button" onclick="document.getElementById('importFile').click()">Import</button>
+      </span>
+    </div>
     <div class="subtitle" id="setSubtitle">Crystamber · Pokemon TCG Collection Tracker · 102 cards</div>
 
     <div class="set-tabs" id="setTabs">
@@ -644,6 +732,12 @@
   <footer>
     <span id="serverDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-right:6px;vertical-align:middle;" title="Connecting to cloud..."></span>
     Progress saves automatically in your browser.
+    <span class="footer-tools">
+      <button type="button" onclick="exportCollection()">Export backup</button>
+      <button type="button" onclick="document.getElementById('importFile').click()">Import</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none"
+             onchange="if(this.files[0]){importCollection(this.files[0]);this.value='';}">
+    </span>
   </footer>
 </div>
 
@@ -1531,9 +1625,10 @@
     localStorage.setItem(s.editionsKey, JSON.stringify(d.card_editions || {}));
   }
 
-  // Used only on first contact for a set. A card owned on either side is owned,
-  // so nothing gets dropped; the earlier acquisition date wins because that is
-  // the true one. Local wins a metadata clash — it is the side that never synced.
+  // Used on first contact for a set, and on reconnect when both sides moved while
+  // the backend was unreachable. A card owned on either side is owned, so nothing
+  // gets dropped; the earlier acquisition date wins because that is the true one.
+  // Local wins a metadata clash — it is the side holding the unsent edits.
   function unionMerge(local, cloud) {
     const owned = Object.assign({}, cloud.owned || {});
     for (const num in local.owned) {
@@ -1546,6 +1641,93 @@
       prices:        Object.assign({}, cloud.prices        || {}, local.prices),
       card_editions: Object.assign({}, cloud.card_editions || {}, local.card_editions),
     };
+  }
+
+  // ─── LOCAL EXPORT / IMPORT ───────────────────────────────────────────────────
+  // Cloud sync was the only way state ever left a device, so whenever Supabase is
+  // down the newest copy of the collection lives in exactly one browser's
+  // localStorage with no way to get it out. Clearing site data on that phone would
+  // have ended it. These two work with the backend dead, which is the entire point.
+  //
+  // Shape matches backup_crystamber_*.json: { setId: { owned, conditions, prices,
+  // cardEditions } }, so old backups import without conversion.
+  async function exportCollection() {
+    const out = {};
+    for (const id in SETS) {
+      const s = SETS[id];
+      out[id] = {
+        owned:        loadOwned(s.storageKey),
+        conditions:   loadJSON(s.condKey),
+        prices:       loadJSON(s.priceKey),
+        cardEditions: loadJSON(s.editionsKey),
+      };
+    }
+    const text = JSON.stringify(out, null, 2);
+    const name = `backup_crystamber_${todayISO()}.json`;
+
+    // A blob download is unreliable on a phone — iOS Safari often just opens the
+    // JSON in a tab, which is not a saved file. The share sheet is the native
+    // route out of a phone: AirDrop, Files, mail it to yourself. Desktop and any
+    // browser without file sharing fall through to the ordinary download.
+    try {
+      const file = new File([text], name, { type: 'application/json' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: name });
+        return;
+      }
+    } catch (err) {
+      // AbortError means the user dismissed the sheet — that is a choice, not a
+      // failure, so do not fall through and fire a surprise download at them.
+      if (err && err.name === 'AbortError') return;
+    }
+
+    const blob = new Blob([text], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  // Union, never replace. Importing an older backup must not delete cards this
+  // device has picked up since — the merge only ever adds.
+  function importCollection(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data;
+      try { data = JSON.parse(reader.result); }
+      catch (_) { alert('That file is not valid JSON.'); return; }
+      if (!data || typeof data !== 'object') { alert('That file is not a Crystamber backup.'); return; }
+
+      const touched = [];
+      for (const id in data) {
+        if (!SETS[id]) continue;
+        const incoming = data[id] || {};
+        // This device is passed as the winning side, so an old backup can fill
+        // gaps but can never overwrite a condition or price set since it was
+        // taken. Owned dates resolve to the earlier one regardless of side.
+        const merged = unionMerge(
+          setPayload(id),
+          { owned:      incoming.owned        || {},
+            conditions: incoming.conditions   || {},
+            prices:     incoming.prices       || {},
+            card_editions: incoming.cardEditions || incoming.card_editions || {} }
+        );
+        writeSetLocal(id, merged);
+        touched.push(id);
+        if (sb) pendingSets.add(id);
+      }
+      if (!touched.length) { alert('No recognised sets in that file.'); return; }
+
+      loadSetState(activeSetId);
+      updateProgress();
+      render();
+      if (sb && cloudReady && pendingSets.size) scheduleFlush(0);
+      refreshStatus();
+      alert(`Imported ${touched.length} set(s): ${touched.join(', ')}. Nothing was removed.`);
+    };
+    reader.readAsText(file);
   }
 
   function queueSet(setId) {
@@ -1651,20 +1833,45 @@
 
   // The dot tells the truth: grey = not connected yet, amber = unsaved work in
   // flight, red = writes are failing and how many sets are stranded.
+  //
+  // The dot alone was not enough. Its only detail was a title tooltip, which a
+  // phone cannot show, sitting in the footer below the whole grid — so a dead
+  // backend looked identical to a healthy one on the device most edits happen on.
+  // refreshStatus now also drives a banner at the top of the page for the two
+  // states that mean "your edits are not leaving this device": a hard sync error,
+  // and a first read that never lands.
+  const CONNECT_STALL_MS = 8000;
+  const bootedAt = Date.now();
+  let stallTimer = setTimeout(refreshStatus, CONNECT_STALL_MS + 250);
+
   function refreshStatus() {
     const el = document.getElementById('serverDot');
-    if (!el) return;
-    let color, title;
+    const banner = document.getElementById('syncBanner');
+    let color, title, alert = null, severe = false;
+
     if (!sb) {
       color = 'var(--danger)';
       title = 'No cloud sync - the Supabase library failed to load. Changes are local to this browser only.';
+      alert = ['Not syncing - this device only.',
+               'The sync library failed to load. Your edits are saved in this browser but will not reach your other devices.'];
+      severe = true;
     } else if (syncError) {
       const msg = (syncError && syncError.message) ? syncError.message : String(syncError);
+      const names = [...pendingSets];
       color = 'var(--danger)';
-      title = `Sync failing - ${pendingSets.size} set(s) not saved to cloud [${[...pendingSets].join(', ')}]. ${msg}. Retrying.`;
+      title = `Sync failing - ${pendingSets.size} set(s) not saved to cloud [${names.join(', ')}]. ${msg}. Retrying.`;
+      alert = [names.length
+                 ? `Not syncing - ${names.length} set(s) unsaved: ${names.join(', ')}.`
+                 : 'Not syncing - cannot reach the cloud.',
+               `Your edits are saved on this device only. Do not edit on another device until this clears. ${msg}. Retrying automatically.`];
+      severe = true;
     } else if (!cloudReady) {
       color = 'var(--text-dim)';
       title = 'Connecting to cloud...';
+      if (Date.now() - bootedAt > CONNECT_STALL_MS) {
+        alert = ['Still connecting - not synced yet.',
+                 'The first read has not landed. Anything you change now is saved on this device only until it does.'];
+      }
     } else if (pendingSets.size) {
       color = 'var(--warn)';
       title = `Saving ${pendingSets.size} set(s)...`;
@@ -1672,8 +1879,39 @@
       color = 'var(--success)';
       title = 'Cloud sync active - every set saved';
     }
-    el.style.background = color;
-    el.title = title;
+
+    if (el) { el.style.background = color; el.title = title; }
+
+    if (banner) {
+      if (alert) {
+        banner.innerHTML = '';
+        banner.appendChild(document.createTextNode(alert[0]));
+        const d = document.createElement('span');
+        d.className = 'detail';
+        d.textContent = alert[1];
+        banner.appendChild(d);
+        // When sync is genuinely down, the banner carries the escape hatch itself.
+        // Telling someone their data is stranded is only half a warning if the way
+        // to get it off the device is somewhere else on the page.
+        if (severe) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'banner-action';
+          b.textContent = 'Export backup now';
+          b.onclick = exportCollection;
+          banner.appendChild(b);
+        }
+        banner.classList.add('show');
+        banner.classList.toggle('bad', severe);
+      } else {
+        banner.classList.remove('show', 'bad');
+      }
+    }
+
+    // Keep re-checking while the first read is still outstanding, so the stall
+    // banner appears on its own rather than waiting for the next user action.
+    clearTimeout(stallTimer);
+    if (sb && !cloudReady && !syncError) stallTimer = setTimeout(refreshStatus, 2000);
   }
 
   // ─── UTILITIES ────────────────────────────────────────────────────────────────
@@ -2281,9 +2519,26 @@
         const id = row.set_id;
         if (!SETS[id]) continue;
         inCloud.add(id);
-        // Edited before this read landed → local is newer than anything the
-        // cloud can tell us. Never overwrite it.
-        if (pendingSets.has(id)) continue;
+
+        // This device holds unsent edits for the set. It used to skip the cloud
+        // row outright and later upsert its own payload over the top, which is
+        // silent data loss the moment the other device also edited while the
+        // backend was down: whoever flushed second erased the other completely.
+        // An outage guarantees that case rather than making it unlikely.
+        //
+        // rev settles it. If the cloud has not moved past what this device has
+        // seen, nothing was lost and the local copy is simply newer. If it has
+        // moved, another device wrote while we were away, so union the two the
+        // same way first contact does and push the merged result up. The set
+        // stays queued in both branches.
+        if (pendingSets.has(id)) {
+          if (row.rev > (seen[id] || 0)) {
+            writeSetLocal(id, unionMerge(setPayload(id), row));
+            setLocalRev(id, row.rev);
+            if (id === activeSetId) loadSetState(id);
+          }
+          continue;
+        }
 
         // First contact: this set has no recorded rev, so this device has never
         // synced under the per-set scheme and may hold work the cloud never got.
