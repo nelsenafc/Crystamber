@@ -39,15 +39,22 @@
 
   /* Header */
   header {
-    background: linear-gradient(135deg, #232342 0%, #1a1a2e 100%);
+    background: var(--bg-2);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    padding: 18px 20px 16px;
+    margin-bottom: 20px;
   }
 
   h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  /* The brand gradient stays on the sign-in screen only. */
+  .auth-wrap h1 {
     font-size: 1.8rem;
     margin-bottom: 4px;
     background: linear-gradient(90deg, var(--accent), #ff6b35);
@@ -62,15 +69,37 @@
     margin-bottom: 16px;
   }
 
-  /* Set tabs */
-  .set-tabs {
+  /* Set switcher. Every set carries its own progress, so the whole collection
+     reads at a glance. Scrolls sideways on a phone instead of wrapping into
+     three rows of pills. */
+  .set-switch {
     display: flex;
     gap: 8px;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -20px 18px;
+    padding: 0 20px 2px;
   }
+  .set-switch::-webkit-scrollbar { display: none; }
+  .set-switch .set-tab {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 7px;
+    min-width: 112px;
+    padding: 9px 12px 8px;
+    text-align: left;
+    background: transparent;
+  }
+  .set-switch .st-name  { font-size: 0.86rem; font-weight: 600; color: var(--text); }
+  .set-switch .st-count { justify-self: end; font-size: 0.72rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .set-switch .st-bar   { grid-column: 1 / -1; height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; }
+  .set-switch .st-bar i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--accent); }
+  .set-switch .set-tab.done .st-bar i { background: var(--success); }
+  .set-switch .set-tab.active { background: rgba(255,203,5,0.08); border-color: var(--accent); }
+  .set-switch .set-tab.active .st-name { color: var(--accent); }
 
   .set-tab {
     background: var(--surface);
@@ -97,72 +126,94 @@
     font-weight: 600;
   }
 
-  .progress-row {
+  /* Hero: set name, the count that matters, one thin bar. */
+  .hero { margin-bottom: 16px; }
+  .hero-line {
     display: flex;
-    align-items: center;
-    gap: 16px;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
-
-  .progress-text {
-    font-size: 1.1rem;
-    font-weight: 600;
-    min-width: 200px;
+  .hero-count { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+  .hero-count .count { font-size: 1.9rem; font-weight: 700; line-height: 1; color: var(--accent); }
+  .hero-count .of    { font-size: 1rem; font-weight: 600; color: var(--text-dim); }
+  .hero-count .pct {
+    margin-left: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #1a1a2e;
+    font-size: 0.75rem;
+    font-weight: 700;
   }
-
-  .progress-text .count { color: var(--accent); font-size: 1.4rem; }
 
   .progress-bar {
-    flex: 1;
-    min-width: 200px;
-    height: 14px;
+    height: 6px;
     background: var(--bg);
-    border: 1px solid var(--border);
     border-radius: 999px;
     overflow: hidden;
-    position: relative;
   }
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--success));
-    transition: width 0.4s ease;
+    background: var(--accent);
     border-radius: 999px;
+    transition: width 0.4s ease;
   }
+  .progress-fill.done { background: var(--success); }
 
-  .filters {
+  /* Toolbar: what to show, as one control, then rarity and sort. */
+  .toolbar {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     flex-wrap: wrap;
-    margin-top: 20px;
-    padding-top: 18px;
+    padding-top: 14px;
     border-top: 1px solid var(--border);
   }
-
+  .segmented {
+    display: inline-flex;
+    gap: 2px;
+    max-width: 100%;
+    padding: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .segmented::-webkit-scrollbar { display: none; }
   .filter-btn {
-    background: var(--surface);
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .filter-btn:hover { color: var(--text); }
+  .filter-btn.active { background: var(--surface-2); color: var(--text); }
+  .toolbar-selects { display: flex; gap: 8px; }
+  .toolbar-selects select {
+    background: var(--bg);
     color: var(--text);
     border: 1px solid var(--border);
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    cursor: pointer;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.82rem;
     font-family: inherit;
-    transition: all 0.15s ease;
+    cursor: pointer;
   }
-
-  .filter-btn:hover {
-    background: var(--surface-2);
-    border-color: var(--accent);
-  }
-
-  .filter-btn.active {
-    background: var(--accent);
-    color: #000;
-    border-color: var(--accent);
-    font-weight: 600;
-  }
+  .toolbar-selects select:hover,
+  .toolbar-selects select:focus { outline: none; border-color: var(--accent); }
 
   /* Card Grid */
   .grid {
@@ -433,13 +484,17 @@
   }
   .card.owned .card-cta { display: none; }
 
-  .spend-stat {
+  /* One quiet line of stats under the bar. */
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin-top: 10px;
+    font-size: 0.8rem;
     color: var(--text-dim);
-    font-size: 0.85rem;
-    margin-top: 6px;
   }
-  .spend-stat b { color: var(--accent); font-weight: 600; }
-  .spend-stat:empty { display: none; }
+  .meta b { color: var(--text); font-weight: 600; }
+  .meta span:empty { display: none; }
 
   .sort-row {
     display: flex;
@@ -497,29 +552,7 @@
     outline: none;
   }
   .card:not(.owned) .card-edition { display: none; }
-  .latest-pickup {
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    margin-left: auto;
-  }
-  .latest-pickup b {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .time-stat {
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    margin-top: 12px;
-  }
-  .time-stat b { color: var(--accent); font-weight: 600; }
-  .time-stat.complete {
-    color: var(--success);
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-  .time-stat.complete b { color: var(--accent); }
-  .time-stat:empty { display: none; }
+  .time-stat.complete { color: var(--success); font-weight: 600; }
 
   .empty {
     grid-column: 1 / -1;
@@ -603,28 +636,46 @@
   #syncBanner.bad  { background: var(--danger); }
   /* Export has to be reachable without scrolling past 102 cards. Burying the
      sync signal in the footer is what hid this outage for two weeks; burying the
-     way to rescue your data down there would be the same mistake twice. */
-  .header-top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .header-tools { flex: 0 0 auto; }
-  .header-tools button {
-    background: transparent;
-    border: 1px solid var(--text-dim);
-    color: var(--text-dim);
-    border-radius: 6px;
-    padding: 6px 12px;
-    margin-left: 6px;
-    font-size: 12px;
-    font-family: inherit;
+     way to rescue your data down there would be the same mistake twice. So it
+     lives in the account menu at the very top - one tap away, without competing
+     with the collection for attention. The sync banner still carries its own
+     export button whenever sync is actually failing. */
+  .menu { position: relative; }
+  .menu summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 1rem;
+    line-height: 1;
     cursor: pointer;
-    min-height: 34px;          /* comfortable tap target on a phone */
   }
-  .header-tools button:hover { color: var(--success); border-color: var(--success); }
+  .menu summary::-webkit-details-marker { display: none; }
+  .menu-pop {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 50;
+    min-width: 190px;
+    padding: 6px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  }
+  .menu-pop button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .menu-pop button:hover { background: var(--surface-2); }
 
   #syncBanner .banner-action {
     display: inline-block;
@@ -824,6 +875,11 @@
   @media (max-width: 600px) {
     .trade-cols { grid-template-columns: 1fr; }
     .view-tab { padding: 8px 10px; font-size: 0.9rem; }
+    header { padding: 14px 14px 12px; }
+    .set-switch { margin: 0 -14px 14px; padding: 0 14px 2px; }
+    .hero-count .count { font-size: 1.6rem; }
+    .toolbar-selects { width: 100%; }
+    .toolbar-selects select { flex: 1; }
   }
 </style>
 </head>
@@ -875,59 +931,57 @@
   </div>
 
   <header id="collectionHeader">
-    <div class="header-top">
-      <h1 id="setTitle">Base</h1>
-      <span class="header-tools">
-        <button type="button" onclick="exportCollection()">Export backup</button>
-        <button type="button" onclick="document.getElementById('importFile').click()">Import</button>
-      </span>
-    </div>
-    <div class="subtitle" id="setSubtitle">Crystamber · Pokemon TCG Collection Tracker · 102 cards</div>
-
-    <div class="set-tabs" id="setTabs">
-      <button class="set-tab active" data-set="base">Base</button>
-      <button class="set-tab" data-set="jungle">Jungle</button>
-      <button class="set-tab" data-set="fossil">Fossil</button>
-      <button class="set-tab" data-set="teamrocket">Team Rocket</button>
-      <button class="set-tab" data-set="gymheroes">Gym Heroes</button>
-      <button class="set-tab" data-set="gymchallenge">Gym Challenge</button>
-      <button class="set-tab" data-set="neogenesis">Neo Genesis</button>
+    <div class="set-switch" id="setTabs">
+      <button class="set-tab active" data-set="base"><span class="st-name">Base</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
+      <button class="set-tab" data-set="jungle"><span class="st-name">Jungle</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
+      <button class="set-tab" data-set="fossil"><span class="st-name">Fossil</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
+      <button class="set-tab" data-set="teamrocket"><span class="st-name">Team Rocket</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
+      <button class="set-tab" data-set="gymheroes"><span class="st-name">Gym Heroes</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
+      <button class="set-tab" data-set="gymchallenge"><span class="st-name">Gym Challenge</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
+      <button class="set-tab" data-set="neogenesis"><span class="st-name">Neo Genesis</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>
     </div>
 
-    <div class="progress-row">
-      <div class="progress-text">
-        <span class="count" id="ownedCount">0</span> / <span id="totalCount">102</span> collected
-        <span id="ownedPct" style="color: var(--text-dim); font-size: 0.9rem; margin-left: 6px;"></span>
+    <div class="hero">
+      <div class="hero-line">
+        <h1 id="setTitle">Base</h1>
+        <div class="hero-count">
+          <span class="count" id="ownedCount">0</span><span class="of">/ <span id="totalCount">102</span></span>
+          <span class="pct" id="ownedPct"></span>
+        </div>
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill" style="width: 0%"></div>
       </div>
+      <div class="meta">
+        <span class="time-stat" id="timeStat"></span>
+        <span class="latest-pickup" id="latestPickup"></span>
+        <span class="spend-stat" id="spendStat"></span>
+      </div>
     </div>
 
-    <div class="time-stat" id="timeStat"></div>
-    <div class="spend-stat" id="spendStat"></div>
-
-    <div class="filters" id="filters">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="owned">Owned</button>
-      <button class="filter-btn" data-filter="missing">Missing</button>
-      <button class="filter-btn" data-filter="wanted">Wanted</button>
-      <button class="filter-btn" data-filter="fortrade">For trade</button>
-      <button class="filter-btn" data-filter="Holo Rare">Holo Rare</button>
-      <button class="filter-btn" data-filter="Rare">Rare</button>
-      <button class="filter-btn" data-filter="Uncommon">Uncommon</button>
-      <button class="filter-btn" data-filter="Common">Common</button>
-    </div>
-
-    <div class="sort-row">
-      <label for="sortSelect">Sort:</label>
-      <select id="sortSelect">
-        <option value="card">Card #</option>
-        <option value="dex" selected>Pokedex #</option>
-        <option value="recent">Recently added</option>
-        <option value="oldest">Oldest first</option>
-      </select>
-      <span class="latest-pickup" id="latestPickup"></span>
+    <div class="toolbar">
+      <div class="segmented" id="filters" role="group" aria-label="Show">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="owned">Owned</button>
+        <button class="filter-btn" data-filter="missing">Missing</button>
+        <button class="filter-btn" data-filter="wanted">Wanted</button>
+        <button class="filter-btn" data-filter="fortrade">For trade</button>
+      </div>
+      <div class="toolbar-selects">
+        <select id="rarityFilter" aria-label="Rarity">
+          <option value="all">All rarities</option>
+          <option value="Holo Rare">Holo Rare</option>
+          <option value="Rare">Rare</option>
+          <option value="Uncommon">Uncommon</option>
+          <option value="Common">Common</option>
+        </select>
+        <select id="sortSelect" aria-label="Sort">
+          <option value="card">Card #</option>
+          <option value="dex" selected>Pokedex #</option>
+          <option value="recent">Recently added</option>
+          <option value="oldest">Oldest first</option>
+        </select>
+      </div>
     </div>
   </header>
 
@@ -2389,6 +2443,8 @@
     document.querySelectorAll(".filter-btn").forEach(b =>
       b.classList.toggle("active", b.dataset.filter === "all")
     );
+    activeRarity = "all";
+    raritySelect.value = "all";
     sortSelect.value = "dex";
 
     updateProgress();
@@ -2408,7 +2464,10 @@
     ownedCountEl.textContent = n;
     const pct = (n / CARDS.length) * 100;
     progressFill.style.width = pct + "%";
-    ownedPctEl.textContent = `(${pct.toFixed(1)}%)`;
+    progressFill.classList.toggle("done", n === CARDS.length);
+    // Floor, so 101 of 102 never rounds up to a false 100%.
+    ownedPctEl.textContent = `${Math.floor(pct)}%`;
+    updateSetTabs();
 
     if (n === 0) {
       latestPickupEl.textContent = "";
@@ -2425,7 +2484,7 @@
     }
     const latestCard = CARDS.find(c => c.num === latestNum);
     if (latestCard) {
-      latestPickupEl.innerHTML = `Latest pickup: <b>${latestCard.name}</b> · ${relTime(latestDate)}`;
+      latestPickupEl.innerHTML = `Latest <b>${latestCard.name}</b> · ${relTime(latestDate)}`;
     }
 
     const isComplete = n === CARDS.length;
@@ -2444,10 +2503,23 @@
     } else {
       const total = priceVals.reduce((a, b) => a + b, 0);
       const avg = total / filled;
-      const note = filled < n ? ` <span style="opacity:0.6">(${filled} of ${n} priced)</span>` : "";
-      let html = `Spent <b>${fmtIDR(total)}</b>`;
-      if (filled > 1) html += ` · Avg <b>${fmtIDR(avg)}</b>`;
-      spendStatEl.innerHTML = html + note;
+      spendStatEl.innerHTML = `Spent <b>${fmtIDR(total)}</b>`;
+      spendStatEl.title = `Only you see this. Avg ${fmtIDR(avg)} a card, ${filled} of ${n} priced.`;
+    }
+  }
+
+  // Every set tab shows its own progress, so the whole collection reads at a glance.
+  function updateSetTabs() {
+    for (const id in SETS) {
+      const tab = document.querySelector(`#setTabs .set-tab[data-set="${id}"]`);
+      if (!tab) continue;
+      const total = SETS[id].cards.length;
+      const n = id === activeSetId ? Object.keys(owned).length
+        : readOnly ? Object.keys(((binderData || {})[id] || {}).owned || {}).length
+        : Object.keys(loadOwned(SETS[id].storageKey)).length;
+      tab.querySelector(".st-count").textContent = `${n}/${total}`;
+      tab.querySelector(".st-bar i").style.width = (n / total * 100) + "%";
+      tab.classList.toggle("done", n === total);
     }
   }
 
@@ -2457,6 +2529,7 @@
   let activeSort = "dex";
   // Filters whose result changes when a card is edited, so the grid re-renders.
   const STATE_FILTERS = ["owned", "missing", "wanted", "fortrade"];
+  let activeRarity = "all";   // rarity is its own dropdown, so it combines with the status filter
 
   const grid            = document.getElementById("grid");
   const ownedCountEl    = document.getElementById("ownedCount");
@@ -2464,6 +2537,7 @@
   const progressFill    = document.getElementById("progressFill");
   const filtersEl       = document.getElementById("filters");
   const sortSelect      = document.getElementById("sortSelect");
+  const raritySelect    = document.getElementById("rarityFilter");
   const latestPickupEl  = document.getElementById("latestPickup");
   const timeStatEl      = document.getElementById("timeStat");
   const spendStatEl     = document.getElementById("spendStat");
@@ -2474,7 +2548,7 @@
     else if (activeFilter === "missing") list = list.filter(c => !isOwned(c.num));
     else if (activeFilter === "wanted") list = list.filter(c => !isOwned(c.num) && wants[c.num] !== undefined);
     else if (activeFilter === "fortrade") list = list.filter(c => isOwned(c.num) && forTrade[c.num] !== undefined);
-    else if (activeFilter !== "all") list = list.filter(c => c.rarity === activeFilter);
+    if (activeRarity !== "all") list = list.filter(c => c.rarity === activeRarity);
 
     if (activeSort === "recent" || activeSort === "oldest") {
       const ownedList   = list.filter(c =>  isOwned(c.num));
@@ -2793,14 +2867,16 @@
     render();
   });
 
+  raritySelect.addEventListener("change", () => {
+    activeRarity = raritySelect.value;
+    render();
+  });
+
   // ─── INIT ─────────────────────────────────────────────────────────────────────
 
   function syncSetHeader() {
     const s = SETS[activeSetId];
     document.getElementById("setTitle").textContent = s.name;
-    document.getElementById("setSubtitle").textContent = readOnly
-      ? `@${binderName}'s binder · ${s.cards.length} cards`
-      : `Crystamber · Pokemon TCG Collection Tracker · ${s.cards.length} cards`;
     document.getElementById("totalCount").textContent = s.cards.length;
     document.querySelectorAll(".set-tab").forEach(b =>
       b.classList.toggle("active", b.dataset.set === activeSetId)
@@ -3009,13 +3085,32 @@
       <span>Signed in as <b>@${escapeAttr(me.username)}</b></span>
       <span class="spacer"></span>
       <button type="button" class="btn-ghost" id="shareBinderBtn">Share my binder</button>
-      ${me.binder_public ? `<button type="button" class="btn-ghost" id="privateBinderBtn">Make binder private</button>` : ""}
-      <button type="button" class="btn-ghost" id="signOutBtn">Sign out</button>`;
+      <details class="menu" id="acctMenu">
+        <summary class="btn-ghost" aria-label="More">⋯</summary>
+        <div class="menu-pop">
+          <button type="button" data-act="export">Export backup</button>
+          <button type="button" data-act="import">Import backup</button>
+          ${me.binder_public ? `<button type="button" data-act="private">Make binder private</button>` : ""}
+          <button type="button" data-act="signout">Sign out</button>
+        </div>
+      </details>`;
     bar.querySelector("#shareBinderBtn").onclick = shareBinder;
-    const priv = bar.querySelector("#privateBinderBtn");
-    if (priv) priv.onclick = () => setBinderPublic(false);
-    bar.querySelector("#signOutBtn").onclick = signOut;
+    bar.querySelector(".menu-pop").onclick = (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      bar.querySelector("#acctMenu").open = false;
+      if (b.dataset.act === "export") exportCollection();
+      else if (b.dataset.act === "import") document.getElementById("importFile").click();
+      else if (b.dataset.act === "private") setBinderPublic(false);
+      else if (b.dataset.act === "signout") signOut();
+    };
   }
+
+  // Close the account menu on any tap outside it.
+  document.addEventListener("click", (e) => {
+    const m = document.getElementById("acctMenu");
+    if (m && m.open && !m.contains(e.target)) m.open = false;
+  });
 
   async function setBinderPublic(on) {
     const { error } = await sb.from("profiles").update({ binder_public: on }).eq("id", uid);
@@ -3374,7 +3469,6 @@
     document.body.classList.add("read-only");
     showScreen("appRoot");
     document.getElementById("viewTabs").hidden = true;
-    document.querySelector(".header-tools").hidden = true;
     document.querySelector("footer").hidden = true;
 
     const { data: { session } } = await sb.auth.getSession();
