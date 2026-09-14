@@ -7,3 +7,12 @@ collection.json
 backup_old_supabase_*.json
 backup_*.json
 .github
+supabase
+# Original scans stay in the repo; the site serves the WebP copies in img/
+/base
+/jungle
+/fossil
+/teamrocket
+/gymheroes
+/gymchallenge
+/neogenesis

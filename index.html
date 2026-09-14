@@ -662,6 +662,169 @@
     margin-top: 2px;
     word-break: break-word;
   }
+
+  /* Several elements below set display:flex/grid, which beats the hidden
+     attribute on its own. This keeps el.hidden = true meaning hidden. */
+  [hidden] { display: none !important; }
+
+  /* Accounts */
+  .auth-wrap {
+    max-width: 380px;
+    margin: 8vh auto 0;
+    background: linear-gradient(135deg, #232342 0%, #1a1a2e 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .auth-tabs { display: flex; gap: 8px; margin: 18px 0 16px; }
+  .auth-tabs .set-tab { flex: 1; }
+  .field { display: block; margin-bottom: 12px; }
+  .field span { display: block; font-size: 0.78rem; color: var(--text-dim); margin-bottom: 4px; }
+  .field input, .inline-form input {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 16px;            /* under 16px and iOS zooms the page on focus */
+    font-family: inherit;
+  }
+  .field input:focus, .inline-form input:focus { outline: none; border-color: var(--accent); }
+  .btn-primary {
+    width: 100%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary:disabled { opacity: 0.6; cursor: default; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    min-height: 34px;
+  }
+  a.btn-ghost { text-decoration: none; display: inline-flex; align-items: center; }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .auth-msg { font-size: 0.82rem; margin-top: 12px; min-height: 1.2em; color: var(--danger); line-height: 1.45; }
+  .auth-msg.ok { color: var(--success); }
+  .auth-note { font-size: 0.8rem; color: var(--accent); margin-top: 14px; line-height: 1.5; }
+  .link-btn {
+    background: none; border: none; padding: 0; margin-top: 10px;
+    color: var(--text-dim); font-size: 0.78rem; text-decoration: underline;
+    cursor: pointer; font-family: inherit;
+  }
+
+  .account-bar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px;
+  }
+  .account-bar b { color: var(--text); }
+  .account-bar .spacer { flex: 1; }
+
+  .view-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .view-tab {
+    background: transparent; border: none; border-bottom: 2px solid transparent;
+    color: var(--text-dim); padding: 8px 12px; margin-bottom: -1px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .view-tab:hover { color: var(--text); }
+  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .view-tab .pill {
+    display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 6px;
+    border-radius: 999px; background: #f472b6; color: #1a1a2e;
+    font-size: 0.7rem; line-height: 18px; text-align: center; vertical-align: 1px;
+  }
+
+  /* Group and trade panels */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .panel h2 { font-size: 1.05rem; margin-bottom: 4px; }
+  .panel .sub { color: var(--text-dim); font-size: 0.84rem; margin-bottom: 14px; line-height: 1.5; }
+  .panel .sub b { color: var(--text); }
+  .inline-form { display: flex; gap: 8px; flex-wrap: wrap; }
+  .inline-form input { flex: 1; width: auto; min-width: 0; padding: 9px 12px; }
+  .inline-form .btn-primary { width: auto; }
+  .muted { color: var(--text-dim); font-size: 0.84rem; line-height: 1.5; }
+
+  .table-scroll { overflow-x: auto; }
+  .board { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .board th {
+    text-align: left; color: var(--text-dim); font-weight: 500; font-size: 0.75rem;
+    padding: 6px 8px; border-bottom: 1px solid var(--border);
+  }
+  .board td { padding: 9px 8px; border-bottom: 1px solid rgba(58,58,92,0.5); vertical-align: middle; }
+  .board tr.me td { background: rgba(255,203,5,0.06); }
+  .board .rank { width: 28px; color: var(--text-dim); }
+  .board .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .board .bar {
+    height: 8px; min-width: 70px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 999px; overflow: hidden;
+  }
+  .board .bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); }
+  a.user-link { color: var(--text); text-decoration: none; font-weight: 600; }
+  a.user-link:hover { color: var(--accent); }
+
+  .trade-person { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; }
+  .trade-person h3 { font-size: 0.95rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tag-match {
+    background: rgba(74,222,128,0.16); color: var(--success);
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 600;
+  }
+  .trade-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .trade-col h4 {
+    font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;
+    letter-spacing: 0.05em; font-weight: 600; margin-bottom: 8px;
+  }
+  .mini-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .mini { width: 76px; font-size: 0.66rem; color: var(--text-dim); line-height: 1.3; }
+  .mini img {
+    width: 76px; aspect-ratio: 245 / 342; object-fit: cover; display: block;
+    border-radius: 5px; border: 1px solid var(--border); background: var(--bg); margin-bottom: 4px;
+  }
+  .mini b { display: block; color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Want and trade chips on cards */
+  .card-flag {
+    display: inline-block; margin-top: 6px; margin-left: 6px;
+    font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; line-height: 1.3;
+    vertical-align: top; cursor: pointer; transition: filter 0.15s ease;
+    background: rgba(144,144,168,0.15); color: var(--text-dim);
+  }
+  .card-flag:hover { filter: brightness(1.18); }
+  .card-flag.want.on  { background: rgba(244,114,182,0.18); color: #f472b6; font-weight: 600; }
+  .card-flag.trade.on { background: rgba(129,140,248,0.22); color: #c7d2fe; font-weight: 600; }
+  .card.wanted:not(.owned) { border-color: rgba(244,114,182,0.55); }
+  .card:not(.owned) .card-cta + .card-flag { margin-left: 0; }
+
+  /* Someone else's binder */
+  .read-only .card { cursor: default; }
+  .read-only .card:hover { transform: none; border-color: var(--border); box-shadow: none; }
+  .read-only .card.owned:hover { border-color: var(--success); box-shadow: 0 0 0 1px var(--success), 0 4px 16px rgba(74, 222, 128, 0.25); }
+  .read-only .card-date, .read-only .card-edition,
+  .read-only .card-condition, .read-only .card-flag { cursor: default; }
+
+  @media (max-width: 600px) {
+    .trade-cols { grid-template-columns: 1fr; }
+    .view-tab { padding: 8px 10px; font-size: 0.9rem; }
+  }
 </style>
 </head>
 <body>
@@ -672,7 +835,46 @@
 </div>
 <div class="container">
 
-  <header>
+  <div id="authScreen" hidden>
+    <div class="auth-wrap">
+      <h1>Crystamber</h1>
+      <div class="subtitle" style="margin-bottom:0">Track your WotC-era Pokemon collection with your group.</div>
+      <div class="auth-tabs" id="authTabs">
+        <button type="button" class="set-tab active" data-mode="signin">Sign in</button>
+        <button type="button" class="set-tab" data-mode="signup">Create account</button>
+      </div>
+      <form id="authForm" novalidate>
+        <label class="field" id="usernameField" hidden>
+          <span>Username - this is what your group sees</span>
+          <input id="authUsername" autocomplete="nickname" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="e.g. ashketchum">
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input id="authEmail" type="email" autocomplete="email" autocapitalize="none" spellcheck="false">
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input id="authPassword" type="password" autocomplete="current-password">
+        </label>
+        <button class="btn-primary" id="authSubmit" type="submit">Sign in</button>
+        <div class="auth-msg" id="authMsg"></div>
+      </form>
+      <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
+      <div class="auth-note" id="joinNote" hidden></div>
+    </div>
+  </div>
+
+  <div id="appRoot" hidden>
+
+  <div class="account-bar" id="accountBar"></div>
+
+  <div class="view-tabs" id="viewTabs">
+    <button type="button" class="view-tab active" data-view="collection">Collection</button>
+    <button type="button" class="view-tab" data-view="trades">Trades<span class="pill" id="tradePill" hidden></span></button>
+    <button type="button" class="view-tab" data-view="group">Group</button>
+  </div>
+
+  <header id="collectionHeader">
     <div class="header-top">
       <h1 id="setTitle">Base</h1>
       <span class="header-tools">
@@ -709,6 +911,8 @@
       <button class="filter-btn active" data-filter="all">All</button>
       <button class="filter-btn" data-filter="owned">Owned</button>
       <button class="filter-btn" data-filter="missing">Missing</button>
+      <button class="filter-btn" data-filter="wanted">Wanted</button>
+      <button class="filter-btn" data-filter="fortrade">For trade</button>
       <button class="filter-btn" data-filter="Holo Rare">Holo Rare</button>
       <button class="filter-btn" data-filter="Rare">Rare</button>
       <button class="filter-btn" data-filter="Uncommon">Uncommon</button>
@@ -729,6 +933,9 @@
 
   <div class="grid" id="grid"></div>
 
+  <div id="tradesView" hidden></div>
+  <div id="groupView" hidden></div>
+
   <footer>
     <span id="serverDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-right:6px;vertical-align:middle;" title="Connecting to cloud..."></span>
     Progress saves automatically in your browser.
@@ -739,6 +946,8 @@
              onchange="if(this.files[0]){importCollection(this.files[0]);this.value='';}">
     </span>
   </footer>
+
+  </div>
 </div>
 
 <script>
@@ -1459,8 +1668,8 @@
     base: {
       id: "base",
       name: "Base",
-      imgPath: "base",
-      imgExt: "jpg",
+      imgPath: "img/base",
+      imgExt: "webp",
       editions: [
         { key: "1st",        label: "1st Ed"     },
         { key: "shadowless", label: "Shadowless" },
@@ -1475,8 +1684,8 @@
     jungle: {
       id: "jungle",
       name: "Jungle",
-      imgPath: "jungle",
-      imgExt: "png",
+      imgPath: "img/jungle",
+      imgExt: "webp",
       editions: [
         { key: "1st",       label: "1st Ed"    },
         { key: "unlimited", label: "Unlimited" },
@@ -1490,8 +1699,8 @@
     fossil: {
       id: "fossil",
       name: "Fossil",
-      imgPath: "fossil",
-      imgExt: "png",
+      imgPath: "img/fossil",
+      imgExt: "webp",
       editions: [
         { key: "1st",       label: "1st Ed"    },
         { key: "unlimited", label: "Unlimited" },
@@ -1505,8 +1714,8 @@
     teamrocket: {
       id: "teamrocket",
       name: "Team Rocket",
-      imgPath: "teamrocket",
-      imgExt: "png",
+      imgPath: "img/teamrocket",
+      imgExt: "webp",
       editions: [
         { key: "1st",       label: "1st Ed"    },
         { key: "unlimited", label: "Unlimited" },
@@ -1520,8 +1729,8 @@
     gymheroes: {
       id: "gymheroes",
       name: "Gym Heroes",
-      imgPath: "gymheroes",
-      imgExt: "png",
+      imgPath: "img/gymheroes",
+      imgExt: "webp",
       editions: [
         { key: "1st",       label: "1st Ed"    },
         { key: "unlimited", label: "Unlimited" },
@@ -1535,8 +1744,8 @@
     gymchallenge: {
       id: "gymchallenge",
       name: "Gym Challenge",
-      imgPath: "gymchallenge",
-      imgExt: "png",
+      imgPath: "img/gymchallenge",
+      imgExt: "webp",
       editions: [
         { key: "1st",       label: "1st Ed"    },
         { key: "unlimited", label: "Unlimited" },
@@ -1550,8 +1759,8 @@
     neogenesis: {
       id: "neogenesis",
       name: "Neo Genesis",
-      imgPath: "neogenesis",
-      imgExt: "png",
+      imgPath: "img/neogenesis",
+      imgExt: "webp",
       editions: [
         { key: "1st",       label: "1st Ed"    },
         { key: "unlimited", label: "Unlimited" },
@@ -1566,17 +1775,29 @@
 
   // ─── STATE ────────────────────────────────────────────────────────────────────
 
+  // Want and trade lists are stored per set, alongside the other card maps.
+  for (const id in SETS) {
+    SETS[id].wantsKey = `${id}Wants_v1`;
+    SETS[id].tradeKey = `${id}ForTrade_v1`;
+  }
+
   let activeSetId = localStorage.getItem("activeSet") || "base";
+  if (!SETS[activeSetId]) activeSetId = "base";
   let CARDS = [];
-  let owned = {}, conditions = {}, prices = {}, cardEditions = {};
+  let owned = {}, conditions = {}, prices = {}, cardEditions = {}, wants = {}, forTrade = {};
+
+  let uid = null;          // signed-in user; every collection key in localStorage is namespaced by it
+  let me = null;           // { id, username, binder_public }
+  let readOnly = false;    // true while viewing someone else's binder via ?u=
+  let binderData = null;   // { setId: row } for the binder being viewed
+  let binderName = "";
 
   // ─── SUPABASE SYNC ───────────────────────────────────────────────────────────
-  // One row per (collection, set) in collection_sets. Editing Jungle writes only
+  // One row per (user, set) in user_sets. Editing Jungle writes only
   // the Jungle row, so a bad write can no longer take other sets down with it.
   const SUPABASE_URL = 'https://guyrhkzmogqcnemwyilx.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_vwBr1SsV84I964WDAetFzA_Ow4p6e2L';
-  const COLLECTION_ID = 'crystamber';
-  const REV_KEY = 'crystamberRevs_v1';   // { setId: rev } — highest rev this device has seen
+  const REV_KEY = 'crystamberRevs_v1';   // { setId: rev } — highest rev this device has seen, per user
 
   const sb = (window.supabase && SUPABASE_URL)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -1595,7 +1816,7 @@
   function setLocalRev(setId, rev) {
     const revs = localRevs();
     revs[setId] = rev;
-    localStorage.setItem(REV_KEY, JSON.stringify(revs));
+    saveJSON(REV_KEY, revs);
   }
 
   // Always read straight from localStorage rather than the live in-memory objects,
@@ -1603,26 +1824,31 @@
   function setPayload(setId) {
     const s = SETS[setId];
     return {
-      collection_id: COLLECTION_ID,
+      user_id:       uid,
       set_id:        setId,
       owned:         loadOwned(s.storageKey),
       conditions:    loadJSON(s.condKey),
       prices:        loadJSON(s.priceKey),
       card_editions: loadJSON(s.editionsKey),
+      wants:         loadJSON(s.wantsKey),
+      for_trade:     loadJSON(s.tradeKey),
     };
   }
 
   function payloadHasData(p) {
     return !!(Object.keys(p.owned).length || Object.keys(p.conditions).length
-           || Object.keys(p.prices).length || Object.keys(p.card_editions).length);
+           || Object.keys(p.prices).length || Object.keys(p.card_editions).length
+           || Object.keys(p.wants).length || Object.keys(p.for_trade).length);
   }
 
   function writeSetLocal(setId, d) {
     const s = SETS[setId];
-    localStorage.setItem(s.storageKey,  JSON.stringify(d.owned         || {}));
-    localStorage.setItem(s.condKey,     JSON.stringify(d.conditions    || {}));
-    localStorage.setItem(s.priceKey,    JSON.stringify(d.prices        || {}));
-    localStorage.setItem(s.editionsKey, JSON.stringify(d.card_editions || {}));
+    saveJSON(s.storageKey,  d.owned         || {});
+    saveJSON(s.condKey,     d.conditions    || {});
+    saveJSON(s.priceKey,    d.prices        || {});
+    saveJSON(s.editionsKey, d.card_editions || {});
+    saveJSON(s.wantsKey,    d.wants         || {});
+    saveJSON(s.tradeKey,    d.for_trade     || {});
   }
 
   // Used on first contact for a set, and on reconnect when both sides moved while
@@ -1640,6 +1866,8 @@
       conditions:    Object.assign({}, cloud.conditions    || {}, local.conditions),
       prices:        Object.assign({}, cloud.prices        || {}, local.prices),
       card_editions: Object.assign({}, cloud.card_editions || {}, local.card_editions),
+      wants:         Object.assign({}, cloud.wants         || {}, local.wants     || {}),
+      for_trade:     Object.assign({}, cloud.for_trade     || {}, local.for_trade || {}),
     };
   }
 
@@ -1660,10 +1888,12 @@
         conditions:   loadJSON(s.condKey),
         prices:       loadJSON(s.priceKey),
         cardEditions: loadJSON(s.editionsKey),
+        wants:        loadJSON(s.wantsKey),
+        forTrade:     loadJSON(s.tradeKey),
       };
     }
     const text = JSON.stringify(out, null, 2);
-    const name = `backup_crystamber_${todayISO()}.json`;
+    const name = `backup_crystamber_${me ? me.username + '_' : ''}${todayISO()}.json`;
 
     // A blob download is unreliable on a phone — iOS Safari often just opens the
     // JSON in a tab, which is not a saved file. The share sheet is the native
@@ -1712,7 +1942,9 @@
           { owned:      incoming.owned        || {},
             conditions: incoming.conditions   || {},
             prices:     incoming.prices       || {},
-            card_editions: incoming.cardEditions || incoming.card_editions || {} }
+            card_editions: incoming.cardEditions || incoming.card_editions || {},
+            wants:      incoming.wants || {},
+            for_trade:  incoming.forTrade || incoming.for_trade || {} }
         );
         writeSetLocal(id, merged);
         touched.push(id);
@@ -1746,8 +1978,8 @@
     const batch = [...pendingSets];
     try {
       const { data, error } = await sb
-        .from('collection_sets')
-        .upsert(batch.map(setPayload), { onConflict: 'collection_id,set_id' })
+        .from('user_sets')
+        .upsert(batch.map(setPayload), { onConflict: 'user_id,set_id' })
         .select('set_id, rev');
       if (error) throw error;
       batch.forEach(id => pendingSets.delete(id));
@@ -1775,15 +2007,21 @@
     "CGC 10", "CGC 9.5",
   ];
 
+  // Every collection key is namespaced by user, so two people signing in on the
+  // same phone never read or overwrite each other's cards.
+  function lk(key) { return `u:${uid}:${key}`; }
+
+  function saveJSON(key, obj) { localStorage.setItem(lk(key), JSON.stringify(obj)); }
+
   function loadJSON(key) {
     try {
-      const v = JSON.parse(localStorage.getItem(key) || "{}");
+      const v = JSON.parse(localStorage.getItem(lk(key)) || "{}");
       return v && typeof v === "object" ? v : {};
     } catch (_) { return {}; }
   }
 
   function loadOwned(key) {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(lk(key));
     if (!raw) return {};
     try {
       const parsed = JSON.parse(raw);
@@ -1791,7 +2029,7 @@
         const today = todayISO();
         const out = {};
         parsed.forEach(n => { out[n] = today; });
-        localStorage.setItem(key, JSON.stringify(out));
+        saveJSON(key, out);
         return out;
       }
       return parsed && typeof parsed === "object" ? parsed : {};
@@ -1801,33 +2039,55 @@
   function loadSetState(setId) {
     const s = SETS[setId];
     CARDS = s.cards;
+    if (readOnly) {
+      const r = (binderData && binderData[setId]) || {};
+      owned        = r.owned || {};
+      conditions   = r.conditions || {};
+      prices       = {};
+      cardEditions = r.card_editions || {};
+      wants        = r.wants || {};
+      forTrade     = r.for_trade || {};
+      return;
+    }
     owned = loadOwned(s.storageKey);
     conditions = loadJSON(s.condKey);
     prices = loadJSON(s.priceKey);
     cardEditions = loadJSON(s.editionsKey);
+    wants = loadJSON(s.wantsKey);
+    forTrade = loadJSON(s.tradeKey);
   }
 
-  loadSetState(activeSetId);
+  // State loads in startApp or openBinder, once we know whose cards these are.
 
   // ─── STORAGE ─────────────────────────────────────────────────────────────────
 
   function save() {
-    localStorage.setItem(SETS[activeSetId].storageKey, JSON.stringify(owned));
+    saveJSON(SETS[activeSetId].storageKey, owned);
     queueSet(activeSetId);
   }
 
   function saveConditions() {
-    localStorage.setItem(SETS[activeSetId].condKey, JSON.stringify(conditions));
+    saveJSON(SETS[activeSetId].condKey, conditions);
     queueSet(activeSetId);
   }
 
   function savePrices() {
-    localStorage.setItem(SETS[activeSetId].priceKey, JSON.stringify(prices));
+    saveJSON(SETS[activeSetId].priceKey, prices);
     queueSet(activeSetId);
   }
 
   function saveCardEditions() {
-    localStorage.setItem(SETS[activeSetId].editionsKey, JSON.stringify(cardEditions));
+    saveJSON(SETS[activeSetId].editionsKey, cardEditions);
+    queueSet(activeSetId);
+  }
+
+  function saveWants() {
+    saveJSON(SETS[activeSetId].wantsKey, wants);
+    queueSet(activeSetId);
+  }
+
+  function saveForTrade() {
+    saveJSON(SETS[activeSetId].tradeKey, forTrade);
     queueSet(activeSetId);
   }
 
@@ -1841,13 +2101,16 @@
   // states that mean "your edits are not leaving this device": a hard sync error,
   // and a first read that never lands.
   const CONNECT_STALL_MS = 8000;
-  const bootedAt = Date.now();
+  let bootedAt = Date.now();     // reset when someone signs in
   let stallTimer = setTimeout(refreshStatus, CONNECT_STALL_MS + 250);
 
   function refreshStatus() {
     const el = document.getElementById('serverDot');
     const banner = document.getElementById('syncBanner');
     let color, title, alert = null, severe = false;
+
+    // Nothing of yours is syncing while signed out or looking at someone else's binder.
+    if (readOnly || !uid) { if (banner) banner.classList.remove('show', 'bad'); return; }
 
     if (!sb) {
       color = 'var(--danger)';
@@ -1917,6 +2180,11 @@
   // ─── UTILITIES ────────────────────────────────────────────────────────────────
 
   const pad = (n) => String(n).padStart(3, "0");
+
+  function cardImgSrc(setId, num) {
+    const s = SETS[setId];
+    return s.imgBase ? `${s.imgBase}/${num}.${s.imgExt}` : `${s.imgPath}/${pad(num)}.${s.imgExt}`;
+  }
 
   function todayISO() {
     const d = new Date();
@@ -1999,21 +2267,23 @@
 
   function undoRemove() {
     if (!undoState) return;
-    const { num, date, condition, price, edition } = undoState;
+    const { num, date, condition, price, edition, trade } = undoState;
     owned[num] = date;
     if (condition !== undefined) conditions[num] = condition;
     if (price !== undefined) prices[num] = price;
     if (edition !== undefined) cardEditions[num] = edition;
+    if (trade !== undefined) forTrade[num] = trade;
     save();
     if (condition !== undefined) saveConditions();
     if (price !== undefined) savePrices();
     if (edition !== undefined) saveCardEditions();
+    if (trade !== undefined) saveForTrade();
     undoToast.classList.remove("visible");
     if (undoTimer) { clearTimeout(undoTimer); undoTimer = null; }
     undoState = null;
     replaceCardInDom(num);
     updateProgress();
-    if (activeFilter === "owned" || activeFilter === "missing" || activeSort !== "card") render();
+    if (STATE_FILTERS.includes(activeFilter) || activeSort !== "card") render();
   }
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────────
@@ -2027,23 +2297,27 @@
         condition: conditions[num],
         price:     prices[num],
         edition:   cardEditions[num],
+        trade:     forTrade[num],
       };
       delete owned[num];
       if (conditions[num] !== undefined) { delete conditions[num]; saveConditions(); }
       if (prices[num] !== undefined) { delete prices[num]; savePrices(); }
       if (cardEditions[num] !== undefined) { delete cardEditions[num]; saveCardEditions(); }
+      if (forTrade[num] !== undefined) { delete forTrade[num]; saveForTrade(); }
       save();
       replaceCardInDom(num);
       updateProgress();
-      if (activeFilter === "owned" || activeFilter === "missing" || activeSort !== "card") render();
+      if (STATE_FILTERS.includes(activeFilter) || activeSort !== "card") render();
       showUndoToast(card ? card.name : `#${num}`);
     } else {
       if (undoState && undoState.num === num) dismissUndo();
       owned[num] = todayISO();
+      // Getting a card you were hunting takes it off your want list.
+      if (wants[num] !== undefined) { delete wants[num]; saveWants(); }
       save();
       replaceCardInDom(num);
       updateProgress();
-      if (activeFilter === "owned" || activeFilter === "missing" || activeSort !== "card") render();
+      if (STATE_FILTERS.includes(activeFilter) || activeSort !== "card") render();
     }
   }
 
@@ -2081,24 +2355,37 @@
     replaceCardInDom(num);
   }
 
+  function toggleWant(num) {
+    if (isOwned(num)) return;
+    if (wants[num] !== undefined) delete wants[num];
+    else wants[num] = todayISO();
+    saveWants();
+    replaceCardInDom(num);
+    updateTradePill();
+    if (activeFilter === "wanted") render();
+  }
+
+  function toggleTrade(num) {
+    if (!isOwned(num)) return;
+    if (forTrade[num] !== undefined) delete forTrade[num];
+    else forTrade[num] = todayISO();
+    saveForTrade();
+    replaceCardInDom(num);
+    updateTradePill();
+    if (activeFilter === "fortrade") render();
+  }
+
   // ─── SET SWITCHER ─────────────────────────────────────────────────────────────
 
   function switchSet(setId) {
     if (setId === activeSetId) return;
     activeSetId = setId;
-    localStorage.setItem("activeSet", setId);
+    if (!readOnly) localStorage.setItem("activeSet", setId);
     loadSetState(setId);
     activeFilter = "all";
     activeSort = "dex";
 
-    const s = SETS[setId];
-    document.getElementById("setTitle").textContent = s.name;
-    document.getElementById("setSubtitle").textContent = `Crystamber · Pokemon TCG Collection Tracker · ${s.cards.length} cards`;
-    document.getElementById("totalCount").textContent = s.cards.length;
-
-    document.querySelectorAll(".set-tab").forEach(b =>
-      b.classList.toggle("active", b.dataset.set === setId)
-    );
+    syncSetHeader();
     document.querySelectorAll(".filter-btn").forEach(b =>
       b.classList.toggle("active", b.dataset.filter === "all")
     );
@@ -2168,6 +2455,8 @@
 
   let activeFilter = "all";
   let activeSort = "dex";
+  // Filters whose result changes when a card is edited, so the grid re-renders.
+  const STATE_FILTERS = ["owned", "missing", "wanted", "fortrade"];
 
   const grid            = document.getElementById("grid");
   const ownedCountEl    = document.getElementById("ownedCount");
@@ -2183,6 +2472,8 @@
     let list = CARDS.slice();
     if (activeFilter === "owned") list = list.filter(c => isOwned(c.num));
     else if (activeFilter === "missing") list = list.filter(c => !isOwned(c.num));
+    else if (activeFilter === "wanted") list = list.filter(c => !isOwned(c.num) && wants[c.num] !== undefined);
+    else if (activeFilter === "fortrade") list = list.filter(c => isOwned(c.num) && forTrade[c.num] !== undefined);
     else if (activeFilter !== "all") list = list.filter(c => c.rarity === activeFilter);
 
     if (activeSort === "recent" || activeSort === "oldest") {
@@ -2213,8 +2504,10 @@
 
   function buildCard(card) {
     const isOwn = isOwned(card.num);
+    const isWanted = !isOwn && wants[card.num] !== undefined;
+    const isTrade  = isOwn && forTrade[card.num] !== undefined;
     const el = document.createElement("div");
-    el.className = "card" + (isOwn ? " owned" : "");
+    el.className = "card" + (isOwn ? " owned" : "") + (isWanted ? " wanted" : "");
     el.dataset.num = card.num;
     el.tabIndex = 0;
     el.setAttribute("role", "button");
@@ -2222,9 +2515,7 @@
     el.setAttribute("aria-label", `${card.name}, card #${card.num}, ${card.rarity}, ${isOwn ? "owned" : "missing"}`);
 
     const activeSet = SETS[activeSetId];
-    const imgSrc = activeSet.imgBase
-      ? `${activeSet.imgBase}/${card.num}.${activeSet.imgExt}`
-      : `${activeSet.imgPath}/${pad(card.num)}.${activeSet.imgExt}`;
+    const imgSrc = cardImgSrc(activeSetId, card.num);
     const imgLoading = activeSet.imgBase ? "eager" : "lazy";
     const dateLabel = isOwn ? fmtDate(owned[card.num]) : "";
     const condValue = conditions[card.num] || "";
@@ -2247,19 +2538,30 @@
       <div class="card-info">
         <div class="card-name">${card.name}</div>
         <div class="card-meta">${card.rarity}${card.cardType !== "Pokemon" ? " · " + card.cardType : ""}</div>
-        ${!isOwn ? `<div class="card-cta">+ Add to collection</div>` : ""}
+        ${!isOwn && !readOnly ? `<div class="card-cta">+ Add to collection</div>` : ""}
+        ${!isOwn && (!readOnly || isWanted) ? `<span class="card-flag want${isWanted ? " on" : ""}" title="A card you're hunting - your group sees this">${isWanted ? "★ Wanted" : "☆ Want"}</span>` : ""}
         ${isOwn ? `<div class="card-date" title="Click to edit purchase date">${dateLabel}</div>` : ""}
-        ${isOwn ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
-        ${isOwn ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
-        ${isOwn ? `<span class="card-price ${priceClass}" title="Click to set price">${escapeAttr(priceDisplay)}</span>` : ""}
+        ${isOwn && (!readOnly || editionValue) ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
+        ${isOwn && (!readOnly || condValue) ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
+        ${isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : ""}
+        ${isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}
       </div>
     `;
+
+    // Someone else's binder: look, don't touch.
+    if (readOnly) {
+      el.removeAttribute("role");
+      el.removeAttribute("aria-pressed");
+      el.tabIndex = -1;
+      return el;
+    }
 
     el.addEventListener("click", (e) => {
       if (e.target.closest(".card-date")) return;
       if (e.target.closest(".card-edition")) return;
       if (e.target.closest(".card-condition")) return;
       if (e.target.closest(".card-price")) return;
+      if (e.target.closest(".card-flag")) return;
       toggle(card.num);
     });
     el.addEventListener("keydown", (e) => {
@@ -2445,6 +2747,15 @@
       });
     }
 
+    const flagEl = el.querySelector(".card-flag");
+    if (flagEl) {
+      flagEl.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (isOwn) toggleTrade(card.num);
+        else toggleWant(card.num);
+      });
+    }
+
     return el;
   }
 
@@ -2484,17 +2795,17 @@
 
   // ─── INIT ─────────────────────────────────────────────────────────────────────
 
-  // Sync set title/tab to saved activeSetId on load
-  const s = SETS[activeSetId];
-  document.getElementById("setTitle").textContent = s.name;
-  document.getElementById("setSubtitle").textContent = `Crystamber · Pokemon TCG Collection Tracker · ${s.cards.length} cards`;
-  document.getElementById("totalCount").textContent = s.cards.length;
-  document.querySelectorAll(".set-tab").forEach(b =>
-    b.classList.toggle("active", b.dataset.set === activeSetId)
-  );
-
-  updateProgress();
-  render();
+  function syncSetHeader() {
+    const s = SETS[activeSetId];
+    document.getElementById("setTitle").textContent = s.name;
+    document.getElementById("setSubtitle").textContent = readOnly
+      ? `@${binderName}'s binder · ${s.cards.length} cards`
+      : `Crystamber · Pokemon TCG Collection Tracker · ${s.cards.length} cards`;
+    document.getElementById("totalCount").textContent = s.cards.length;
+    document.querySelectorAll(".set-tab").forEach(b =>
+      b.classList.toggle("active", b.dataset.set === activeSetId)
+    );
+  }
 
   // Pull every set for this collection, then adopt only the rows the cloud has
   // actually moved past. rev is server-managed, so "cloud rev higher than the
@@ -2507,9 +2818,9 @@
     refreshStatus();
     try {
       const { data: rows, error } = await sb
-        .from('collection_sets')
-        .select('set_id, owned, conditions, prices, card_editions, rev')
-        .eq('collection_id', COLLECTION_ID);
+        .from('user_sets')
+        .select('set_id, owned, conditions, prices, card_editions, wants, for_trade, rev')
+        .eq('user_id', uid);
       if (error) throw error;
 
       const seen = localRevs();
@@ -2585,7 +2896,522 @@
     }
   }
 
-  initialLoad();
+  // ─── ACCOUNTS ─────────────────────────────────────────────────────────────────
+
+  const params     = new URLSearchParams(location.search);
+  const binderUser = (params.get("u") || "").trim().toLowerCase();
+  const joinParam  = (params.get("join") || "").trim().toUpperCase();
+  // An invite link has to survive the signup detour, so the code waits in
+  // storage until there is someone signed in to join with.
+  if (joinParam) localStorage.setItem("pendingJoin", joinParam);
+
+  const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+  let authMode = "signin";
+
+  function showScreen(id) {
+    document.getElementById("authScreen").hidden = id !== "authScreen";
+    document.getElementById("appRoot").hidden    = id !== "appRoot";
+  }
+
+  function authMsg(text, ok) {
+    const el = document.getElementById("authMsg");
+    el.textContent = text;
+    el.classList.toggle("ok", !!ok);
+  }
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    document.querySelectorAll("#authTabs .set-tab").forEach(b =>
+      b.classList.toggle("active", b.dataset.mode === mode));
+    document.getElementById("usernameField").hidden = mode !== "signup";
+    document.getElementById("authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
+    document.getElementById("authPassword").autocomplete = mode === "signup" ? "new-password" : "current-password";
+    authMsg("");
+  }
+
+  function showAuth(note) {
+    showScreen("authScreen");
+    const pending = localStorage.getItem("pendingJoin");
+    const joinNote = document.getElementById("joinNote");
+    joinNote.hidden = !pending;
+    if (pending) {
+      joinNote.textContent = "You've been invited to a group. Sign in or create an account and you'll join it automatically.";
+      setAuthMode("signup");   // invited people are almost always new
+    }
+    if (note) authMsg(note);
+  }
+
+  document.getElementById("authTabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".set-tab");
+    if (b) setAuthMode(b.dataset.mode);
+  });
+
+  document.getElementById("authForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!sb) { authMsg("Could not reach Crystamber. Check your connection and reload."); return; }
+    const email    = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const username = document.getElementById("authUsername").value.trim().toLowerCase();
+    if (!email || !password) { authMsg("Enter your email and password."); return; }
+
+    const btn = document.getElementById("authSubmit");
+    btn.disabled = true;
+    try {
+      if (authMode === "signup") {
+        if (!USERNAME_RE.test(username)) { authMsg("Username: 3-20 characters, lowercase letters, numbers or _."); return; }
+        if (password.length < 6) { authMsg("Password needs at least 6 characters."); return; }
+        const { data: taken } = await sb.from("profiles").select("id").eq("username", username).maybeSingle();
+        if (taken) { authMsg(`@${username} is taken. Try another.`); return; }
+        const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+        if (error) { authMsg(error.message); return; }
+        // No session means the project still requires email confirmation.
+        if (!data.session) {
+          setAuthMode("signin");
+          authMsg("Account created. Confirm it from the email we sent, then sign in.", true);
+          return;
+        }
+        startApp(data.user);
+      } else {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { authMsg(error.message === "Invalid login credentials" ? "Wrong email or password." : error.message); return; }
+        startApp(data.user);
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("forgotBtn").addEventListener("click", async () => {
+    if (!sb) return;
+    const email = document.getElementById("authEmail").value.trim();
+    if (!email) { authMsg("Type your email above first, then tap Forgot password."); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    authMsg(error ? error.message : "If that email has an account, a reset link is on its way.", !error);
+  });
+
+  if (sb) {
+    sb.auth.onAuthStateChange((event, session) => {
+      // Supabase warns against awaiting its own calls inside this callback, so defer.
+      if (event !== "PASSWORD_RECOVERY") return;
+      setTimeout(async () => {
+        const pw = prompt("Choose a new password [at least 6 characters]:");
+        if (!pw) return;
+        const { error } = await sb.auth.updateUser({ password: pw });
+        alert(error ? "Could not update the password: " + error.message : "Password updated.");
+        if (!error && session && !uid) startApp(session.user);
+      }, 0);
+    });
+  }
+
+  function renderAccountBar() {
+    const bar = document.getElementById("accountBar");
+    bar.innerHTML = `
+      <span>Signed in as <b>@${escapeAttr(me.username)}</b></span>
+      <span class="spacer"></span>
+      <button type="button" class="btn-ghost" id="shareBinderBtn">Share my binder</button>
+      ${me.binder_public ? `<button type="button" class="btn-ghost" id="privateBinderBtn">Make binder private</button>` : ""}
+      <button type="button" class="btn-ghost" id="signOutBtn">Sign out</button>`;
+    bar.querySelector("#shareBinderBtn").onclick = shareBinder;
+    const priv = bar.querySelector("#privateBinderBtn");
+    if (priv) priv.onclick = () => setBinderPublic(false);
+    bar.querySelector("#signOutBtn").onclick = signOut;
+  }
+
+  async function setBinderPublic(on) {
+    const { error } = await sb.from("profiles").update({ binder_public: on }).eq("id", uid);
+    if (error) { alert("Could not update your binder: " + error.message); return false; }
+    me.binder_public = on;
+    renderAccountBar();
+    return true;
+  }
+
+  async function shareBinder() {
+    if (!me.binder_public) {
+      const ok = confirm("Anyone with the link will see which cards you own, with condition and edition. Never what you paid. Share your binder?");
+      if (!ok || !(await setBinderPublic(true))) return;
+    }
+    const url = `${location.origin}${location.pathname}?u=${encodeURIComponent(me.username)}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: `@${me.username} on Crystamber`, url }); return; }
+    } catch (err) { if (err && err.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(url); alert("Binder link copied:\n" + url); }
+    catch (_) { prompt("Copy your binder link:", url); }
+  }
+
+  async function signOut() {
+    if (pendingSets.size && !confirm("Some edits have not reached the cloud yet. Sign out anyway? They stay saved on this device.")) return;
+    await sb.auth.signOut();
+    location.href = location.pathname;
+  }
+
+  async function startApp(user) {
+    if (uid) return;
+    uid = user.id;
+    me = { id: uid, username: (user.user_metadata && user.user_metadata.username) || "you", binder_public: false };
+    bootedAt = Date.now();
+    showScreen("appRoot");
+    renderAccountBar();
+    loadSetState(activeSetId);
+    syncSetHeader();
+    updateProgress();
+    render();
+    initialLoad();
+
+    const { data: prof } = await sb.from("profiles").select("id, username, binder_public").eq("id", uid).maybeSingle();
+    if (prof) { me = prof; renderAccountBar(); }
+
+    activeGroupId = localStorage.getItem(lk("activeGroup"));
+    const pending = localStorage.getItem("pendingJoin");
+    if (pending) {
+      localStorage.removeItem("pendingJoin");
+      history.replaceState(null, "", location.pathname);
+      if (await joinGroup(pending)) { switchView("group"); return; }
+    }
+    await loadGroups();
+  }
+
+  // ─── GROUPS ───────────────────────────────────────────────────────────────────
+
+  let groups = [];
+  let activeGroupId = null;
+  let groupRows = null;       // group_collections for the active group - never includes prices
+  let groupError = null;
+  let boardSet = "all";
+
+  async function loadGroups() {
+    const { data, error } = await sb.from("groups").select("id, name, invite_code, created_at").order("created_at");
+    groups = error ? [] : (data || []);
+    if (!groups.some(g => g.id === activeGroupId)) activeGroupId = groups.length ? groups[0].id : null;
+    if (activeGroupId) localStorage.setItem(lk("activeGroup"), activeGroupId);
+    groupRows = null;
+    await refreshGroup();
+  }
+
+  async function refreshGroup() {
+    if (activeGroupId) {
+      const { data, error } = await sb.rpc("group_collections", { gid: activeGroupId });
+      groupError = error || null;
+      if (!error) groupRows = data || [];
+    } else {
+      groupRows = null;
+    }
+    updateTradePill();
+    renderActiveView();
+  }
+
+  async function joinGroup(code) {
+    const { data, error } = await sb.rpc("join_group", { code });
+    if (error) { alert(error.message); await loadGroups(); return false; }
+    activeGroupId = data;
+    await loadGroups();
+    return true;
+  }
+
+  async function createGroup(name) {
+    const { data, error } = await sb.rpc("create_group", { group_name: name });
+    if (error) { alert(error.message); return; }
+    activeGroupId = data.id;
+    await loadGroups();
+  }
+
+  function membersFromRows(rows) {
+    const map = new Map();
+    for (const r of rows) {
+      if (!map.has(r.user_id)) map.set(r.user_id, { id: r.user_id, username: r.username, sets: {} });
+      if (r.set_id) map.get(r.user_id).sets[r.set_id] = r;
+    }
+    return [...map.values()];
+  }
+
+  // Your own lists come from this device rather than the cloud copy, so a card
+  // you marked a second ago already counts.
+  function myLists() {
+    const out = {};
+    for (const id in SETS) {
+      const s = SETS[id];
+      out[id] = { owned: loadOwned(s.storageKey), wants: loadJSON(s.wantsKey), forTrade: loadJSON(s.tradeKey) };
+    }
+    return out;
+  }
+
+  // For each other member: what they are trading that you want, what they want
+  // that you are trading, and what they own that you want but have not offered.
+  function computeTrades() {
+    const mine = myLists();
+    const people = [];
+    for (const m of membersFromRows(groupRows || [])) {
+      if (m.id === uid) continue;
+      const get = [], give = [], alsoOwns = [];
+      for (const id in SETS) {
+        const t = m.sets[id] || {};
+        const tOwned = t.owned || {}, tWants = t.wants || {}, tTrade = t.for_trade || {};
+        for (const num in mine[id].wants) {
+          if (num in mine[id].owned) continue;
+          const item = { setId: id, num: +num, edition: (t.card_editions || {})[num], cond: (t.conditions || {})[num] };
+          if (num in tTrade && num in tOwned) get.push(item);
+          else if (num in tOwned) alsoOwns.push(item);
+        }
+        for (const num in tWants) {
+          if (num in tOwned) continue;
+          if (num in mine[id].forTrade && num in mine[id].owned) give.push({ setId: id, num: +num });
+        }
+      }
+      if (get.length || give.length || alsoOwns.length) {
+        people.push({ m, get, give, alsoOwns, twoWay: get.length > 0 && give.length > 0 });
+      }
+    }
+    people.sort((a, b) => (b.twoWay - a.twoWay)
+      || ((b.get.length + b.give.length) - (a.get.length + a.give.length)));
+    return people;
+  }
+
+  function updateTradePill() {
+    const pill = document.getElementById("tradePill");
+    if (!pill) return;
+    const n = (groupRows && !readOnly) ? computeTrades().reduce((a, p) => a + p.get.length, 0) : 0;
+    pill.textContent = n;
+    pill.hidden = n === 0;
+  }
+
+  function cardName(setId, num) {
+    const c = SETS[setId].cards.find(x => x.num === num);
+    return c ? c.name : `#${num}`;
+  }
+
+  function binderLink(username) {
+    return `<a class="user-link" href="?u=${encodeURIComponent(username)}">@${escapeAttr(username)}</a>`;
+  }
+
+  function miniList(items) {
+    if (!items.length) return `<div class="muted">None</div>`;
+    return `<div class="mini-list">${items.map(it => {
+      const extra = [it.edition ? editionLabel(it.setId, it.edition) : "", it.cond || ""].filter(Boolean).join(" · ");
+      return `<div class="mini">
+        <img src="${cardImgSrc(it.setId, it.num)}" alt="" loading="lazy">
+        <b>${escapeAttr(cardName(it.setId, it.num))}</b>${escapeAttr(SETS[it.setId].name)} #${it.num}${extra ? `<br>${escapeAttr(extra)}` : ""}
+      </div>`;
+    }).join("")}</div>`;
+  }
+
+  function groupFormsHTML(joinTitle, createTitle) {
+    return `
+      <div class="panel">
+        <h2>${joinTitle}</h2>
+        <div class="sub">Trades and the completion board happen inside a group. Open the invite link you were sent, or paste its code here.</div>
+        <form class="inline-form" data-act="join">
+          <input name="code" placeholder="Invite code" autocapitalize="characters" autocomplete="off">
+          <button class="btn-primary" type="submit">Join</button>
+        </form>
+      </div>
+      <div class="panel">
+        <h2>${createTitle}</h2>
+        <div class="sub">You get an invite link to send to your group.</div>
+        <form class="inline-form" data-act="create">
+          <input name="name" placeholder="Group name" maxlength="60" autocomplete="off">
+          <button class="btn-primary" type="submit">Create group</button>
+        </form>
+      </div>`;
+  }
+
+  function wireGroupForms(root) {
+    root.querySelectorAll("form[data-act]").forEach(f => f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const val = f.querySelector("input").value.trim();
+      if (!val) return;
+      const btn = f.querySelector("button");
+      btn.disabled = true;
+      if (f.dataset.act === "join") await joinGroup(val);
+      else await createGroup(val);
+      btn.disabled = false;
+    }));
+  }
+
+  function renderTrades() {
+    const el = document.getElementById("tradesView");
+    if (!activeGroupId) { el.innerHTML = groupFormsHTML("Join your group", "Or start one"); wireGroupForms(el); return; }
+    if (!groupRows) {
+      el.innerHTML = `<div class="panel"><div class="muted">${groupError ? "Could not load your group: " + escapeAttr(groupError.message) : "Loading your group..."}</div></div>`;
+      return;
+    }
+    const mine = myLists();
+    let wantN = 0, tradeN = 0;
+    for (const id in SETS) {
+      wantN  += Object.keys(mine[id].wants).filter(n => !(n in mine[id].owned)).length;
+      tradeN += Object.keys(mine[id].forTrade).filter(n => n in mine[id].owned).length;
+    }
+    const people = computeTrades();
+    const g = groups.find(x => x.id === activeGroupId);
+
+    let html = `<div class="panel">
+      <h2>Trades in ${escapeAttr(g ? g.name : "your group")}</h2>
+      <div class="sub">You're hunting <b>${wantN}</b> card${wantN === 1 ? "" : "s"} and trading <b>${tradeN}</b>.
+        Tap <b>☆ Want</b> on a missing card or <b>⇄ Trade</b> on one you own to add to these lists.</div>`;
+    if (!people.length) {
+      html += `<div class="muted">${wantN || tradeN
+        ? "No matches in your group yet. They appear here as soon as someone offers a card you want, or wants one you're trading."
+        : "Mark some cards first and matches will appear here."}</div>`;
+    }
+    for (const p of people) {
+      html += `<div class="trade-person">
+        <h3>${binderLink(p.m.username)}${p.twoWay ? `<span class="tag-match">Two-way match</span>` : ""}</h3>
+        <div class="trade-cols">
+          <div class="trade-col"><h4>They're trading, you want</h4>${miniList(p.get)}</div>
+          <div class="trade-col"><h4>They want, you're trading</h4>${miniList(p.give)}</div>
+        </div>
+        ${p.alsoOwns.length ? `<div class="muted" style="margin-top:10px">Also owns ${p.alsoOwns.length === 1 ? "a card" : p.alsoOwns.length + " cards"} you want, not marked for trade:
+          ${p.alsoOwns.map(it => `${escapeAttr(cardName(it.setId, it.num))} [${escapeAttr(SETS[it.setId].name)}]`).join(", ")}. Worth asking.</div>` : ""}
+      </div>`;
+    }
+    el.innerHTML = html + `</div>`;
+  }
+
+  function renderGroup() {
+    const el = document.getElementById("groupView");
+    if (!activeGroupId) { el.innerHTML = groupFormsHTML("Join your group", "Or start one"); wireGroupForms(el); return; }
+    const g = groups.find(x => x.id === activeGroupId);
+    if (!g || !groupRows) {
+      el.innerHTML = `<div class="panel"><div class="muted">${groupError ? "Could not load your group: " + escapeAttr(groupError.message) : "Loading your group..."}</div></div>`;
+      return;
+    }
+    const invite = `${location.origin}${location.pathname}?join=${g.invite_code}`;
+    const members = membersFromRows(groupRows);
+    const mine = myLists();
+    const allTotal = Object.values(SETS).reduce((n, s) => n + s.cards.length, 0);
+    const setTotal = boardSet === "all" ? allTotal : SETS[boardSet].cards.length;
+
+    // Your own row reads this device so it matches what you just tapped.
+    const countFor = (m, id) => m.id === uid
+      ? Object.keys(mine[id].owned).length
+      : Object.keys((m.sets[id] || {}).owned || {}).length;
+    const rows = members.map(m => ({
+      m,
+      n: boardSet === "all" ? Object.keys(SETS).reduce((a, id) => a + countFor(m, id), 0) : countFor(m, boardSet),
+    })).sort((a, b) => (b.n - a.n) || a.m.username.localeCompare(b.m.username));
+
+    el.innerHTML = `
+      <div class="panel">
+        <h2>${escapeAttr(g.name)}</h2>
+        <div class="sub">${members.length} member${members.length === 1 ? "" : "s"} · invite code <b>${g.invite_code}</b></div>
+        ${groups.length > 1 ? `<div class="sort-row" style="margin:0 0 12px"><label for="groupSelect">Group:</label>
+          <select id="groupSelect">${groups.map(x => `<option value="${x.id}"${x.id === activeGroupId ? " selected" : ""}>${escapeAttr(x.name)}</option>`).join("")}</select></div>` : ""}
+        <div class="inline-form">
+          <input id="inviteLink" value="${escapeAttr(invite)}" readonly>
+          <button type="button" class="btn-primary" id="shareInvite">Share invite</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Completion board</h2>
+        <div class="sort-row" style="margin:0 0 12px">
+          <label for="boardSet">Set:</label>
+          <select id="boardSet">
+            <option value="all"${boardSet === "all" ? " selected" : ""}>All ${Object.keys(SETS).length} sets</option>
+            ${Object.values(SETS).map(s => `<option value="${s.id}"${boardSet === s.id ? " selected" : ""}>${escapeAttr(s.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="table-scroll"><table class="board">
+          <thead><tr><th>#</th><th>Collector</th><th>Progress</th><th class="num">Cards</th></tr></thead>
+          <tbody>${rows.map((r, i) => `<tr class="${r.m.id === uid ? "me" : ""}">
+            <td class="rank">${i + 1}</td>
+            <td>${binderLink(r.m.username)}</td>
+            <td style="width:45%"><div class="bar"><div style="width:${(r.n / setTotal * 100).toFixed(1)}%"></div></div></td>
+            <td class="num">${r.n} / ${setTotal}</td>
+          </tr>`).join("")}</tbody>
+        </table></div>
+        ${members.length < 2 ? `<div class="muted" style="margin-top:12px">Just you so far. Share the invite link with your group.</div>` : ""}
+      </div>
+      ${groupFormsHTML("Join another group", "Start another group")}`;
+
+    wireGroupForms(el);
+    el.querySelector("#boardSet").onchange = (e) => { boardSet = e.target.value; renderGroup(); };
+    const gs = el.querySelector("#groupSelect");
+    if (gs) gs.onchange = (e) => {
+      activeGroupId = e.target.value;
+      localStorage.setItem(lk("activeGroup"), activeGroupId);
+      groupRows = null;
+      renderGroup();
+      refreshGroup();
+    };
+    el.querySelector("#shareInvite").onclick = async () => {
+      try {
+        if (navigator.share) { await navigator.share({ title: `Join ${g.name} on Crystamber`, url: invite }); return; }
+      } catch (err) { if (err && err.name === "AbortError") return; }
+      try { await navigator.clipboard.writeText(invite); alert("Invite link copied."); }
+      catch (_) { el.querySelector("#inviteLink").select(); }
+    };
+  }
+
+  // ─── VIEWS ────────────────────────────────────────────────────────────────────
+
+  let activeView = "collection";
+
+  function renderActiveView() {
+    if (activeView === "trades") renderTrades();
+    else if (activeView === "group") renderGroup();
+  }
+
+  function switchView(view) {
+    activeView = view;
+    document.querySelectorAll(".view-tab").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+    const isCollection = view === "collection";
+    document.getElementById("collectionHeader").hidden = !isCollection;
+    grid.hidden = !isCollection;
+    document.getElementById("tradesView").hidden = view !== "trades";
+    document.getElementById("groupView").hidden  = view !== "group";
+    if (isCollection) { loadSetState(activeSetId); updateProgress(); render(); }
+    else { renderActiveView(); refreshGroup(); }
+  }
+
+  document.getElementById("viewTabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".view-tab");
+    if (b) switchView(b.dataset.view);
+  });
+
+  // ─── BINDER [read-only, ?u=username] ──────────────────────────────────────────
+
+  async function openBinder(uname) {
+    readOnly = true;
+    binderName = uname;
+    document.body.classList.add("read-only");
+    showScreen("appRoot");
+    document.getElementById("viewTabs").hidden = true;
+    document.querySelector(".header-tools").hidden = true;
+    document.querySelector("footer").hidden = true;
+
+    const { data: { session } } = await sb.auth.getSession();
+    document.getElementById("accountBar").innerHTML = `
+      <span>Viewing <b>@${escapeAttr(uname)}</b>'s binder</span>
+      <span class="spacer"></span>
+      <a class="btn-ghost" href="${location.pathname}">${session ? "Back to my collection" : "Start your own collection"}</a>`;
+
+    const { data, error } = await sb.rpc("get_binder", { uname });
+    if (error || !data || !data.length) {
+      document.getElementById("collectionHeader").hidden = true;
+      grid.innerHTML = `<div class="empty">This binder is private, empty, or does not exist.</div>`;
+      return;
+    }
+    binderData = {};
+    data.forEach(r => { binderData[r.set_id] = r; });
+    binderName = data[0].username;
+    // Open on a set they actually collect rather than an empty tab.
+    const has = (id) => binderData[id] && Object.keys(binderData[id].owned || {}).length;
+    if (!has(activeSetId)) activeSetId = Object.keys(SETS).find(has) || activeSetId;
+    loadSetState(activeSetId);
+    syncSetHeader();
+    updateProgress();
+    render();
+  }
+
+  // ─── BOOT ─────────────────────────────────────────────────────────────────────
+
+  async function boot() {
+    if (!sb) { showAuth("Could not load the sync library. Check your connection and reload."); return; }
+    if (binderUser) { openBinder(binderUser); return; }
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) startApp(session.user);
+    else showAuth();
+  }
+
+  boot();
 </script>
 </body>
 </html>

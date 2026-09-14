@@ -13,6 +13,7 @@ const MIME = {
   '.jpg':  'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.png':  'image/png',
+  '.webp': 'image/webp',
   '.svg':  'image/svg+xml',
   '.ico':  'image/x-icon',
 };
@@ -58,7 +59,9 @@ const server = http.createServer((req, res) => {
   }
 
   // Static file serving
-  const urlPath = req.url === '/' ? '/index.html' : req.url.split('?')[0];
+  // Strip the query first - binder and invite links are /?u=... and /?join=...
+  const bare = req.url.split('?')[0];
+  const urlPath = bare === '/' ? '/index.html' : bare;
   const safePath = path.normalize(urlPath).replace(/^(\.\.[/\\])+/, '');
   const filePath = path.join(DIR, safePath);
 
