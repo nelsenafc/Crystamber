@@ -4,13 +4,24 @@ Pokemon card collection tracker for a group of collectors. Each person signs up,
 
 ## Sets covered
 
-Base, Jungle, Fossil, Team Rocket, Gym Heroes, Gym Challenge, Neo Genesis. The card lists are hardcoded in `index.html` - no catalog API.
+Every English WotC-era set - 18 sets, 1,789 cards - grouped by era in the switcher:
+
+- **Base:** Base, Jungle, Fossil, Base Set 2, Team Rocket, Legendary Collection
+- **Gym:** Gym Heroes, Gym Challenge
+- **Neo:** Neo Genesis, Neo Discovery, Neo Revelation, Neo Destiny
+- **e-Card:** Expedition, Aquapolis, Skyridge
+- **Promos & specials:** Black Star Promos, Best of Game, Southern Islands
+
+The card lists are hardcoded in `index.html` - no catalog API at runtime. The first seven sets were entered by hand; the other eleven were generated from the [PokemonTCG/pokemon-tcg-data](https://github.com/PokemonTCG/pokemon-tcg-data) dataset in September 2026. Aquapolis and Skyridge print their holos as H1-H32; those are stored as numbers 151-182 so keys and sorting stay numeric, and keep the printed number in `label`.
+
+To add a set: one card array, one `SETS` entry, and its id in `ERAS`.
 
 ## Images
 
-The site serves WebP copies from `img/<set>/`, named by zero-padded card number. They are 400px wide [the Gym and Neo sets stay at their native 240px, never upscaled], WebP quality 80. All 686 come to about 18MB, against 298MB for the original scans.
+The site serves WebP copies from `img/<set>/`, named by zero-padded card number. They are 400px wide [Gym Heroes, Gym Challenge and Neo Genesis stay at their native 240px, never upscaled], WebP quality 80. All 1,789 come to about 62MB.
 
-- The original scans stay in the per-set folders [`base/`, `jungle/`, ...] as the source of truth. `.vercelignore` keeps them out of the deploy.
+- For the first seven sets, the original scans stay in the per-set folders [`base/`, `jungle/`, ...] as the source of truth. `.vercelignore` keeps them out of the deploy.
+- The other eleven sets were built straight from the pokemontcg.io large images [`images.pokemontcg.io/<set>/<number>_hires.png`]. No originals are kept - that URL is the source.
 - To regenerate, resize each original to 400px wide with Pillow [LANCZOS] and save as WebP, `quality=80, method=6`, into the matching `img/` folder.
 - Vercel serves `img/` with a one-year immutable cache [`vercel.json`]. If an image ever changes, write the new files under a new folder name and repoint `imgPath` - overwriting in place leaves browsers on the old copy for a year.
 - A missing image falls back to a numbered placeholder, so deleting the folders never breaks the app.
