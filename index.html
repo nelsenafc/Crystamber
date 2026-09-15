@@ -1163,6 +1163,76 @@
   }
   .btn-danger:hover { filter: brightness(1.1); }
 
+  /* Card redesign. The art is the hero and "owned" is said once: a thin border
+     and a small corner check, no glow. What you logged reads as two quiet text
+     lines - still tappable to edit - and only Want and Trade keep a chip,
+     because those are what your group sees. Selectors carry two classes so
+     they win over the older pill styles above. */
+  .card { border-width: 1px; }
+  .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.35); }
+  .card.owned,
+  .read-only .card.owned:hover { border-color: rgba(74,222,128,0.5); box-shadow: none; }
+  .check-overlay {
+    top: 8px;
+    right: 8px;
+    bottom: auto;
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+  }
+  .card-info .card-meta { text-transform: none; letter-spacing: 0; font-size: 0.72rem; }
+  .card-details, .card-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+  .card-details { margin-top: 7px; }
+  .card-sub { margin-top: 2px; }
+  .card-info .card-details > *,
+  .card-info .card-sub > * {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    padding: 2px 0;
+    background: none;
+    border-radius: 0;
+    font-size: inherit;
+    font-weight: 500;
+    line-height: inherit;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .card-info .card-sub > * { color: var(--text-dim); font-weight: 400; }
+  .card-info .card-details > .unset,
+  .card-info .card-sub > .unset { color: var(--text-dim); opacity: 0.55; font-weight: 400; }
+  .card-info .card-details > *:hover,
+  .card-info .card-sub > *:hover { filter: none; color: var(--accent); background: none; }
+  /* Condition keeps its color, as a dot rather than a filled pill. */
+  .card-info .card-details > .card-condition::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--dot, transparent);
+  }
+  .card-details > .cond-M, .card-details > .cond-NM { --dot: #4ade80; }
+  .card-details > .cond-LP     { --dot: #ffcb05; }
+  .card-details > .cond-MP     { --dot: #fb923c; }
+  .card-details > .cond-HP     { --dot: #ef4444; }
+  .card-details > .cond-DMG    { --dot: #fca5a5; }
+  .card-details > .cond-graded { --dot: #60a5fa; }
+  .card-info .card-details > .card-condition.unset::before { display: none; }
+  /* Want and Trade: outlined until switched on. */
+  .card-flag { background: transparent; border: 1px solid var(--border); }
+  .card-flag.want.on, .card-flag.trade.on { border-color: transparent; }
+  .card-info > .card-flag { margin: 8px 6px 0 0; }
+  .card-info > .card-cta { margin-right: 6px; }
+
   /* The fan-made disclaimer, on every page including shared binders. */
   .legal {
     max-width: 640px;
@@ -4362,14 +4432,16 @@
     const editionClass = editionValue ? "" : "unset";
 
     const meta = [card.rarity, card.cardType !== "Pokemon" ? card.cardType : ""].filter(Boolean).join(" · ");
-    // The same chips in both layouts, so every editor below works on either.
-    const chips = `
-        ${!isOwn && (!readOnly || isWanted) ? `<span class="card-flag want${isWanted ? " on" : ""}" title="A card you're hunting - your group sees this">${isWanted ? "★ Wanted" : "☆ Want"}</span>` : ""}
-        ${isOwn ? `<div class="card-date" title="Click to edit purchase date">${dateLabel}</div>` : ""}
-        ${isOwn && activeSet.editions.length && (!readOnly || editionValue) ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
-        ${isOwn && (!readOnly || condValue) ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
-        ${isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : ""}
-        ${isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}`;
+    // The same pieces in both layouts, keeping their classes, so every editor
+    // below works on either. The grid arranges them as text lines; the quick
+    // list keeps them as a row of chips.
+    const wantHtml  = !isOwn && (!readOnly || isWanted) ? `<span class="card-flag want${isWanted ? " on" : ""}" title="A card you're hunting - your group sees this">${isWanted ? "★ Wanted" : "☆ Want"}</span>` : "";
+    const dateHtml  = isOwn ? `<div class="card-date" title="Click to edit purchase date">${dateLabel}</div>` : "";
+    const edHtml    = isOwn && activeSet.editions.length && (!readOnly || editionValue) ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : "";
+    const condHtml  = isOwn && (!readOnly || condValue) ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : "";
+    const priceHtml = isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : "";
+    const tradeHtml = isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : "";
+    const chips = wantHtml + dateHtml + edHtml + condHtml + priceHtml + tradeHtml;
 
     el.innerHTML = layout === "list" ? `
       <span class="row-check" aria-hidden="true">✓</span>
@@ -4390,7 +4462,9 @@
         <div class="card-name">${card.name}</div>
         <div class="card-meta">${meta}</div>
         ${!isOwn && !readOnly ? `<div class="card-cta">+ Add to collection</div>` : ""}
-        ${chips}
+        ${edHtml || condHtml ? `<div class="card-details">${edHtml}${condHtml}</div>` : ""}
+        ${dateHtml || priceHtml ? `<div class="card-sub">${dateHtml}${priceHtml}</div>` : ""}
+        ${wantHtml}${tradeHtml}
       </div>
     `;
 
