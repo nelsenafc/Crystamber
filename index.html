@@ -4820,6 +4820,17 @@
     return people;
   }
 
+  // How many cards you're hunting and trading across every set.
+  function myListCounts() {
+    const mine = myLists();
+    let wantN = 0, tradeN = 0;
+    for (const id in SETS) {
+      wantN  += Object.keys(mine[id].wants).filter(n => !(n in mine[id].owned)).length;
+      tradeN += Object.keys(mine[id].forTrade).filter(n => n in mine[id].owned).length;
+    }
+    return { wantN, tradeN };
+  }
+
   function updateTradePill() {
     const pill = document.getElementById("tradePill");
     if (!pill) return;
@@ -4888,17 +4899,26 @@
 
   function renderTrades() {
     const el = document.getElementById("tradesView");
-    if (!activeGroupId) { el.innerHTML = groupFormsHTML("Join your group", "Or start one"); wireGroupForms(el); return; }
+    // Without a group, Trades explains itself and points at the Group tab, which
+    // owns joining and creating. It used to repeat the Group tab's forms, so the
+    // two tabs looked identical.
+    if (!activeGroupId) {
+      const { wantN, tradeN } = myListCounts();
+      el.innerHTML = `<div class="panel">
+        <h2>Trades happen inside a group</h2>
+        <div class="sub">Once you're in one, this shows who is trading a card you want, and who wants one you're trading - two-way matches first.</div>
+        <div class="muted" style="margin-bottom:14px">You can build your lists now: you're hunting <b>${wantN}</b> card${wantN === 1 ? "" : "s"} and trading <b>${tradeN}</b>.
+          Tap <b>☆ Want</b> on a missing card or <b>⇄ Trade</b> on one you own.</div>
+        <button type="button" class="btn-primary" id="goToGroup" style="width:auto">Join or start a group</button>
+      </div>`;
+      el.querySelector("#goToGroup").onclick = () => switchView("group");
+      return;
+    }
     if (!groupRows) {
       el.innerHTML = `<div class="panel"><div class="muted">${groupError ? "Could not load your group: " + escapeAttr(groupError.message) : "Loading your group..."}</div></div>`;
       return;
     }
-    const mine = myLists();
-    let wantN = 0, tradeN = 0;
-    for (const id in SETS) {
-      wantN  += Object.keys(mine[id].wants).filter(n => !(n in mine[id].owned)).length;
-      tradeN += Object.keys(mine[id].forTrade).filter(n => n in mine[id].owned).length;
-    }
+    const { wantN, tradeN } = myListCounts();
     const people = computeTrades();
     const g = groups.find(x => x.id === activeGroupId);
 
