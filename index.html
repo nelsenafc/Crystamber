@@ -1031,6 +1031,10 @@
     .grid.list .card { flex-wrap: wrap; row-gap: 6px; }
     .grid.list .row-chips { width: 100%; justify-content: flex-start; padding-left: 94px; }
     .grid.list .row-chips:empty { display: none; }
+    /* A missing card has one chip, so it stays on the row - one line per card
+       means twice as many rows per screen while ticking off a pile. Owned
+       cards carry up to five chips and still wrap under the name. */
+    .grid.list .card:not(.owned) .row-chips { width: auto; padding-left: 0; }
   }
 </style>
 </head>
