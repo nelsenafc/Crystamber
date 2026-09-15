@@ -4,7 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Crystamber</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- The first sync request starts its connection while the page is still loading. -->
+<link rel="preconnect" href="https://guyrhkzmogqcnemwyilx.supabase.co" crossorigin>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='white' stroke='black' stroke-width='5'/><path d='M 4 50 A 46 46 0 0 1 96 50 Z' fill='%23ee1515' stroke='black' stroke-width='5'/><rect x='4' y='47' width='92' height='6' fill='black'/><circle cx='50' cy='50' r='13' fill='white' stroke='black' stroke-width='5'/><circle cx='50' cy='50' r='5' fill='white' stroke='black' stroke-width='3'/></svg>" />
 <style>
   :root {
@@ -1036,6 +1037,9 @@
        cards carry up to five chips and still wrap under the name. */
     .grid.list .card:not(.owned) .row-chips { width: auto; padding-left: 0; }
   }
+
+  /* <picture> only exists to offer AVIF; it must not change the layout. */
+  .card-image-wrap picture, .mini picture { display: contents; }
 </style>
 </head>
 <body>
@@ -1157,6 +1161,10 @@
   </div>
 </div>
 
+<!-- Pinned and served from this site: a new supabase-js release can no longer
+     reach the live app untested, and no third-party request sits in the way.
+     Loaded here rather than in <head> so it no longer holds up the page. -->
+<script src="vendor/supabase-js-2.116.0.js"></script>
 <script>
   // ─── SET DEFINITIONS ─────────────────────────────────────────────────────────
 
@@ -3718,6 +3726,12 @@
     return s.imgBase ? `${s.imgBase}/${num}.${s.imgExt}` : `${s.imgPath}/${pad(num)}.${s.imgExt}`;
   }
 
+  // AVIF where the browser supports it [about 40% smaller], WebP everywhere else.
+  function cardPicture(setId, num, attrs) {
+    const base = cardImgSrc(setId, num).replace(/\.webp$/, "");
+    return `<picture><source srcset="${base}.avif" type="image/avif"><img src="${base}.webp" ${attrs}></picture>`;
+  }
+
   function todayISO() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -4119,7 +4133,6 @@
     el.setAttribute("aria-label", `${card.name}, card #${cardLabel(card)}, ${card.rarity || card.cardType}, ${isOwn ? "owned" : "missing"}`);
 
     const activeSet = SETS[activeSetId];
-    const imgSrc = cardImgSrc(activeSetId, card.num);
     const imgLoading = activeSet.imgBase ? "eager" : "lazy";
     const dateLabel = isOwn ? fmtDate(owned[card.num]) : "";
     const condValue = conditions[card.num] || "";
@@ -4153,8 +4166,8 @@
     ` : `
       <div class="card-image-wrap">
         <span class="num-badge">#${cardLabel(card)}</span>
-        <img src="${imgSrc}" alt="${escapeAttr(card.name)}" loading="${imgLoading}"
-             onerror="this.outerHTML='<div class=&quot;placeholder&quot;><div class=&quot;ph-num&quot;>#${cardLabel(card)}</div><div class=&quot;ph-label&quot;>no image</div></div>'">
+        ${cardPicture(activeSetId, card.num, `alt="${escapeAttr(card.name)}" loading="${imgLoading}" decoding="async"
+             onerror="this.outerHTML='<div class=&quot;placeholder&quot;><div class=&quot;ph-num&quot;>#${cardLabel(card)}</div><div class=&quot;ph-label&quot;>no image</div></div>'"`)}
         <div class="check-overlay" aria-hidden="true">✓</div>
       </div>
       <div class="card-info">
@@ -4858,7 +4871,7 @@
     return `<div class="mini-list">${items.map(it => {
       const extra = [it.edition ? editionLabel(it.setId, it.edition) : "", it.cond || ""].filter(Boolean).join(" · ");
       return `<div class="mini">
-        <img src="${cardImgSrc(it.setId, it.num)}" alt="" loading="lazy">
+        ${cardPicture(it.setId, it.num, 'alt="" loading="lazy" decoding="async"')}
         <b>${escapeAttr(cardName(it.setId, it.num))}</b>${escapeAttr(SETS[it.setId].name)} #${escapeAttr(printedNum(it.setId, it.num))}${extra ? `<br>${escapeAttr(extra)}` : ""}
       </div>`;
     }).join("")}</div>`;
@@ -5172,15 +5185,36 @@
 
   // ─── BOOT ─────────────────────────────────────────────────────────────────────
 
+  // The session supabase-js keeps on this device, read directly.
+  function storedUser() {
+    try {
+      const ref = new URL(SUPABASE_URL).hostname.split(".")[0];
+      const s = JSON.parse(localStorage.getItem(`sb-${ref}-auth-token`) || "null");
+      return s && s.user ? s.user : null;
+    } catch (_) { return null; }
+  }
+
   async function boot() {
     if (!sb) { showAuth("Could not load the sync library. Check your connection and reload."); return; }
     if (binderUser) { openBinder(binderUser); return; }
+    // Offline, open the collection straight from the session stored on this
+    // device. Asking supabase-js first would stall: with a token older than an
+    // hour it retries the refresh for up to 30 seconds before giving up. Edits
+    // queue as usual, and sync resumes once the token refreshes back online.
+    const offlineUser = !navigator.onLine && storedUser();
+    if (offlineUser) { startApp(offlineUser); return; }
     const { data: { session } } = await sb.auth.getSession();
     if (session) startApp(session.user);
     else showAuth();
   }
 
   boot();
+
+  // Offline caching lives in sw.js. Registered after load so it never competes
+  // with the first paint.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  }
 </script>
 </body>
 </html>

@@ -18,17 +18,23 @@ To add a set: one card array, one `SETS` entry, and its id in `ERAS`.
 
 ## Images
 
-The site serves WebP copies from `img/<set>/`, named by zero-padded card number. They are 400px wide [Gym Heroes, Gym Challenge and Neo Genesis stay at their native 240px, never upscaled], WebP quality 80. All 1,789 come to about 62MB.
+Every card has two copies in `img/<set>/`, named by zero-padded card number: AVIF [quality 55] for browsers that support it and WebP [quality 80] as the fallback, served through a `<picture>` element. Both are 400px wide [Gym Heroes, Gym Challenge and Neo Genesis stay at their native 240px, never upscaled]. The AVIF set is 38.4MB against 62.5MB for WebP - 38% less, with no visible difference at card size.
+
+Only the set on screen loads, and within it only the cards near the viewport. Opening the site on a phone pulls about 16 card images.
 
 - For the first seven sets, the original scans stay in the per-set folders [`base/`, `jungle/`, ...] as the source of truth. `.vercelignore` keeps them out of the deploy.
 - The other eleven sets were built straight from the pokemontcg.io large images [`images.pokemontcg.io/<set>/<number>_hires.png`]. No originals are kept - that URL is the source.
-- To regenerate, resize each original to 400px wide with Pillow [LANCZOS] and save as WebP, `quality=80, method=6`, into the matching `img/` folder.
-- Vercel serves `img/` with a one-year immutable cache [`vercel.json`]. If an image ever changes, write the new files under a new folder name and repoint `imgPath` - overwriting in place leaves browsers on the old copy for a year.
+- To regenerate, resize each source to 400px wide with Pillow [LANCZOS] and save both formats into the matching `img/` folder: WebP `quality=80, method=6`, AVIF `quality=55, speed=6`.
+- Vercel serves `img/` with a one-year immutable cache [`vercel.json`], and the service worker caches viewed images the same way. If an image ever changes, write the new files under a new folder name and repoint `imgPath` - overwriting in place leaves browsers on the old copy for a year.
 - A missing image falls back to a numbered placeholder, so deleting the folders never breaks the app.
 
 ## Stack
 
 Single static `index.html` - no build step. Supabase for auth and cloud sync. `server.js` is a small local dev server.
+
+- **supabase-js is pinned and vendored** at `vendor/supabase-js-2.116.0.js` [the UMD build from npm], loaded at the end of `<body>`. A new release can't reach the live app untested. To upgrade, download the new version under its own file name, change the `<script>` tag, and change `LIBRARY` in `sw.js`.
+- **`sw.js` makes the app work offline.** The page is served from cache and refreshed in the background, so a deploy shows up on the open after next. Images and the library are cache-first, and only what someone has viewed is cached. Supabase requests are never cached - the app's own sync queue handles offline edits. Offline with an expired token, the app opens from the session stored on the device. To switch the worker off, deploy a `sw.js` that calls `self.registration.unregister()`.
+- A `preconnect` hint in `<head>` opens the Supabase connection while the page loads.
 
 ## Run locally
 
@@ -69,3 +75,5 @@ One row per set, not one blob for everything. Editing Jungle writes the Jungle r
 ## Deploy
 
 Hosted on Vercel as the `crystamber` project. `.vercelignore` keeps `server.js`, `collection.json`, the migrations and the original scans out of the deploy. `.vercel/` is gitignored, so run `vercel link` to reconnect a fresh clone.
+
+`vercel.json` sets the cache headers: `img/` and `vendor/` are immutable for a year, and `sw.js` is `no-cache` so a new worker is picked up on the next visit.
