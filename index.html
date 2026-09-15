@@ -1147,6 +1147,22 @@
     cursor: pointer;
   }
 
+  /* Remove confirmation: short, with the destructive button in red. */
+  .sheet.confirm { max-width: 420px; }
+  .sheet.confirm .sheet-actions { justify-content: flex-end; }
+  .btn-danger {
+    padding: 9px 16px;
+    background: var(--danger);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-danger:hover { filter: brightness(1.1); }
+
   /* The fan-made disclaimer, on every page including shared binders. */
   .legal {
     max-width: 640px;
@@ -1165,6 +1181,16 @@
 <div id="updateToast" hidden>
   <span>A new version of Crystamber is ready.</span>
   <button type="button" id="updateReload">Refresh</button>
+</div>
+<div class="sheet-backdrop" id="confirmRemove" hidden>
+  <div class="sheet confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmBody">
+    <h2 id="confirmTitle">Remove this card?</h2>
+    <div class="sub" id="confirmBody"></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn-ghost" id="confirmKeep">Keep it</button>
+      <button type="button" class="btn-danger" id="confirmRemoveBtn">Remove</button>
+    </div>
+  </div>
 </div>
 <div class="sheet-backdrop" id="setPicker" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
@@ -4002,9 +4028,42 @@
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 
-  function toggle(num) {
+  // Removing a card deletes everything logged for it, so it asks first and the
+  // safe choice is the default. Adding stays one tap - the undo covers that.
+  function askRemove(card) {
+    return new Promise(resolve => {
+      const box = document.getElementById("confirmRemove");
+      const logged = [
+        owned[card.num] ? "bought " + fmtDate(owned[card.num]) : "",
+        cardEditions[card.num] ? editionLabel(activeSetId, cardEditions[card.num]) : "",
+        conditions[card.num] || "",
+        typeof prices[card.num] === "number" ? fmtIDR(prices[card.num]) : "",
+        forTrade[card.num] !== undefined ? "marked for trade" : "",
+      ].filter(Boolean);
+      document.getElementById("confirmTitle").textContent = `Remove ${card.name} from your collection?`;
+      document.getElementById("confirmBody").textContent = logged.length
+        ? `This also deletes what you logged for it: ${logged.join(" · ")}.`
+        : "You can add it back any time.";
+      const onKey = (e) => { if (e.key === "Escape") done(false); };
+      const done = (ok) => {
+        box.hidden = true;
+        box.onclick = null;
+        document.removeEventListener("keydown", onKey);
+        resolve(ok);
+      };
+      document.getElementById("confirmKeep").onclick = () => done(false);
+      document.getElementById("confirmRemoveBtn").onclick = () => done(true);
+      box.onclick = (e) => { if (e.target === box) done(false); };
+      document.addEventListener("keydown", onKey);
+      box.hidden = false;
+      document.getElementById("confirmKeep").focus();
+    });
+  }
+
+  async function toggle(num) {
     if (isOwned(num)) {
       const card = CARDS.find(c => c.num === num);
+      if (!(await askRemove(card || { num, name: `#${num}` }))) return;
       undoState = {
         kind:      "remove",
         num,
