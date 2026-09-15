@@ -906,6 +906,132 @@
     .toolbar-selects { width: 100%; }
     .toolbar-selects select { flex: 1; }
   }
+
+  /* Search across every set. */
+  .search { position: relative; margin-bottom: 14px; }
+  .search input {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 10px 14px 10px 38px;
+    background: var(--bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239090a8' stroke-width='2.5' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>") no-repeat 12px center / 16px;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 16px;            /* under 16px and iOS zooms the page on focus */
+    font-family: inherit;
+  }
+  .search input:focus { outline: none; border-color: var(--accent); }
+  .search-results {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 60;
+    max-height: min(60vh, 420px);
+    overflow-y: auto;
+    padding: 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .sr {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+  }
+  .sr:hover, .sr:focus-visible { background: var(--surface-2); outline: none; }
+  .sr-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sr-main b { font-size: 0.88rem; font-weight: 600; }
+  .sr-main span { font-size: 0.75rem; color: var(--text-dim); }
+  .sr-have { color: var(--success); font-weight: 800; }
+  .sr-more { padding: 10px; text-align: center; font-size: 0.8rem; color: var(--text-dim); }
+
+  /* Where a search result lands you. */
+  .card.flash { animation: flash 1.6s ease; }
+  @keyframes flash {
+    0%, 60% { outline: 3px solid var(--accent); outline-offset: 3px; }
+    100%    { outline: 3px solid transparent; outline-offset: 3px; }
+  }
+
+  /* Grid / quick list switch. */
+  .layout-toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .layout-toggle button {
+    padding: 3px 9px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    cursor: pointer;
+  }
+  .layout-toggle button.active { background: var(--surface-2); color: var(--text); }
+
+  /* Quick list: one row per card, no images - for ticking off a pile fast. */
+  .grid.list {
+    grid-template-columns: 1fr;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .grid.list .card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .grid.list .card:last-child { border-bottom: none; }
+  .grid.list .card:hover { transform: none; box-shadow: none; background: var(--surface-2); }
+  .grid.list .card.owned { box-shadow: none; }
+  .row-check {
+    flex: 0 0 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    color: transparent;
+    font-size: 0.8rem;
+    font-weight: 900;
+  }
+  .card.owned .row-check { background: var(--success); border-color: var(--success); color: #0f0f1e; }
+  .row-num { flex: 0 0 44px; color: var(--text-dim); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+  .grid.list .row-chips > * { margin: 0; }
+
+  @media (max-width: 600px) {
+    .grid.list .card { flex-wrap: wrap; row-gap: 6px; }
+    .grid.list .row-chips { width: 100%; justify-content: flex-start; padding-left: 94px; }
+    .grid.list .row-chips:empty { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -956,6 +1082,11 @@
   </div>
 
   <header id="collectionHeader">
+    <div class="search">
+      <input id="searchInput" type="search" placeholder="Search cards" autocomplete="off" autocapitalize="none"
+             spellcheck="false" enterkeyhint="go" aria-label="Search cards in every set">
+      <div class="search-results" id="searchResults" hidden></div>
+    </div>
     <div class="era-tabs" id="eraTabs"></div>
     <div class="set-switch" id="setTabs"></div>
 
@@ -986,6 +1117,10 @@
         <button class="filter-btn" data-filter="fortrade">For trade</button>
       </div>
       <div class="toolbar-selects">
+        <div class="layout-toggle" id="layoutToggle" role="group" aria-label="Layout">
+          <button type="button" data-layout="grid" title="Card grid" aria-label="Card grid">▦</button>
+          <button type="button" data-layout="list" title="Quick list" aria-label="Quick list">☰</button>
+        </div>
         <select id="rarityFilter" aria-label="Rarity">
           <option value="all">All rarities</option>
         </select>
@@ -3645,8 +3780,8 @@
   let undoTimer  = null;
   const undoToast = document.getElementById("undoToast");
 
-  function showUndoToast(cardName) {
-    document.getElementById("undoToastMsg").textContent = `"${cardName}" removed`;
+  function showUndoToast(message) {
+    document.getElementById("undoToastMsg").textContent = message;
     undoToast.classList.add("visible");
     if (undoTimer) clearTimeout(undoTimer);
     undoTimer = setTimeout(dismissUndo, 6000);
@@ -3660,6 +3795,20 @@
 
   function undoRemove() {
     if (!undoState) return;
+    // Undoing an add: take the card back out, and back onto the want list if it was there.
+    if (undoState.kind === "add") {
+      const { num, want } = undoState;
+      delete owned[num];
+      save();
+      if (want !== undefined) { wants[num] = want; saveWants(); }
+      undoToast.classList.remove("visible");
+      if (undoTimer) { clearTimeout(undoTimer); undoTimer = null; }
+      undoState = null;
+      replaceCardInDom(num);
+      updateProgress();
+      if (STATE_FILTERS.includes(activeFilter) || activeSort !== "card") render();
+      return;
+    }
     const { num, date, condition, price, edition, trade } = undoState;
     owned[num] = date;
     if (condition !== undefined) conditions[num] = condition;
@@ -3685,6 +3834,7 @@
     if (isOwned(num)) {
       const card = CARDS.find(c => c.num === num);
       undoState = {
+        kind:      "remove",
         num,
         date:      owned[num],
         condition: conditions[num],
@@ -3701,9 +3851,11 @@
       replaceCardInDom(num);
       updateProgress();
       if (STATE_FILTERS.includes(activeFilter) || activeSort !== "card") render();
-      showUndoToast(card ? card.name : `#${num}`);
+      showUndoToast(`"${card ? card.name : "#" + num}" removed`);
     } else {
-      if (undoState && undoState.num === num) dismissUndo();
+      // A tap while scrolling adds a card instantly, so adds get an undo too.
+      const card = CARDS.find(c => c.num === num);
+      undoState = { kind: "add", num, want: wants[num] };
       owned[num] = todayISO();
       // Getting a card you were hunting takes it off your want list.
       if (wants[num] !== undefined) { delete wants[num]; saveWants(); }
@@ -3711,6 +3863,7 @@
       replaceCardInDom(num);
       updateProgress();
       if (STATE_FILTERS.includes(activeFilter) || activeSort !== "card") render();
+      showUndoToast(`"${card ? card.name : "#" + num}" added`);
     }
   }
 
@@ -3893,6 +4046,28 @@
   const timeStatEl      = document.getElementById("timeStat");
   const spendStatEl     = document.getElementById("spendStat");
 
+  // Grid shows the cards; the quick list is one row per card with no images,
+  // for ticking off a pile fast. Remembered per device.
+  let layout = localStorage.getItem("layout") === "list" ? "list" : "grid";
+  const layoutToggle = document.getElementById("layoutToggle");
+
+  function applyLayout() {
+    grid.classList.toggle("list", layout === "list");
+    layoutToggle.querySelectorAll("button").forEach(b =>
+      b.classList.toggle("active", b.dataset.layout === layout));
+  }
+
+  layoutToggle.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-layout]");
+    if (!b || b.dataset.layout === layout) return;
+    layout = b.dataset.layout;
+    localStorage.setItem("layout", layout);
+    applyLayout();
+    render();
+  });
+
+  applyLayout();
+
   function getFilteredCards() {
     let list = CARDS.slice();
     if (activeFilter === "owned") list = list.filter(c => isOwned(c.num));
@@ -3953,7 +4128,25 @@
     const editionDisplay = editionValue ? editionLabel(activeSetId, editionValue) : "+ edition";
     const editionClass = editionValue ? "" : "unset";
 
-    el.innerHTML = `
+    const meta = [card.rarity, card.cardType !== "Pokemon" ? card.cardType : ""].filter(Boolean).join(" · ");
+    // The same chips in both layouts, so every editor below works on either.
+    const chips = `
+        ${!isOwn && (!readOnly || isWanted) ? `<span class="card-flag want${isWanted ? " on" : ""}" title="A card you're hunting - your group sees this">${isWanted ? "★ Wanted" : "☆ Want"}</span>` : ""}
+        ${isOwn ? `<div class="card-date" title="Click to edit purchase date">${dateLabel}</div>` : ""}
+        ${isOwn && activeSet.editions.length && (!readOnly || editionValue) ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
+        ${isOwn && (!readOnly || condValue) ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
+        ${isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : ""}
+        ${isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}`;
+
+    el.innerHTML = layout === "list" ? `
+      <span class="row-check" aria-hidden="true">✓</span>
+      <span class="row-num">#${cardLabel(card)}</span>
+      <div class="row-main">
+        <div class="card-name">${card.name}</div>
+        <div class="card-meta">${meta}</div>
+      </div>
+      <div class="row-chips">${chips}</div>
+    ` : `
       <div class="card-image-wrap">
         <span class="num-badge">#${cardLabel(card)}</span>
         <img src="${imgSrc}" alt="${escapeAttr(card.name)}" loading="${imgLoading}"
@@ -3962,14 +4155,9 @@
       </div>
       <div class="card-info">
         <div class="card-name">${card.name}</div>
-        <div class="card-meta">${[card.rarity, card.cardType !== "Pokemon" ? card.cardType : ""].filter(Boolean).join(" · ")}</div>
+        <div class="card-meta">${meta}</div>
         ${!isOwn && !readOnly ? `<div class="card-cta">+ Add to collection</div>` : ""}
-        ${!isOwn && (!readOnly || isWanted) ? `<span class="card-flag want${isWanted ? " on" : ""}" title="A card you're hunting - your group sees this">${isWanted ? "★ Wanted" : "☆ Want"}</span>` : ""}
-        ${isOwn ? `<div class="card-date" title="Click to edit purchase date">${dateLabel}</div>` : ""}
-        ${isOwn && activeSet.editions.length && (!readOnly || editionValue) ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
-        ${isOwn && (!readOnly || condValue) ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
-        ${isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : ""}
-        ${isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}
+        ${chips}
       </div>
     `;
 
@@ -4832,6 +5020,96 @@
   document.getElementById("viewTabs").addEventListener("click", (e) => {
     const b = e.target.closest(".view-tab");
     if (b) switchView(b.dataset.view);
+  });
+
+  // ─── SEARCH ───────────────────────────────────────────────────────────────────
+  // One box across every set: type a name [or a printed number like 4 or H1],
+  // pick a result, land on that card in its set. Results are text only, so
+  // searching never downloads a single image.
+
+  const norm = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const SEARCH_INDEX = [];
+  for (const s of Object.values(SETS)) {
+    for (const c of s.cards) SEARCH_INDEX.push({ setId: s.id, card: c, key: norm(c.name) });
+  }
+  const searchInput   = document.getElementById("searchInput");
+  const searchResults = document.getElementById("searchResults");
+  searchInput.placeholder = `Search all ${SEARCH_INDEX.length.toLocaleString("en")} cards`;
+
+  function ownedIn(setId) {
+    if (setId === activeSetId) return owned;
+    if (readOnly) return ((binderData || {})[setId] || {}).owned || {};
+    return loadOwned(SETS[setId].storageKey);
+  }
+
+  function runSearch() {
+    const raw = searchInput.value.trim();
+    const q = norm(raw);
+    const numQ = q.replace(/^#/, "");
+    const isNum = /^h?\d+$/.test(numQ);
+    if (!q || (!isNum && q.length < 2)) { searchResults.hidden = true; searchResults.innerHTML = ""; return; }
+
+    const hits = SEARCH_INDEX.filter(x => isNum ? norm(cardLabel(x.card)) === numQ : x.key.includes(q));
+    // The set you're in first, then names that start with what you typed; otherwise release order.
+    hits.sort((a, b) => ((b.setId === activeSetId) - (a.setId === activeSetId))
+                     || (b.key.startsWith(q) - a.key.startsWith(q)));
+    const shown = hits.slice(0, 30);
+    const ownedBySet = {};
+    searchResults.innerHTML = shown.length
+      ? shown.map(x => {
+          const o = ownedBySet[x.setId] || (ownedBySet[x.setId] = ownedIn(x.setId));
+          const have = Object.prototype.hasOwnProperty.call(o, x.card.num);
+          const bits = [SETS[x.setId].name, "#" + cardLabel(x.card), x.card.rarity].filter(Boolean).join(" · ");
+          return `<button type="button" class="sr" data-set="${x.setId}" data-num="${x.card.num}">
+            <span class="sr-main"><b>${escapeAttr(x.card.name)}</b><span>${escapeAttr(bits)}</span></span>
+            ${have ? `<span class="sr-have" title="In your collection">✓</span>` : ""}
+          </button>`;
+        }).join("")
+        + (hits.length > shown.length ? `<div class="sr-more">${hits.length - shown.length} more - keep typing to narrow it down</div>` : "")
+      : `<div class="sr-more">No card matches "${escapeAttr(raw)}"</div>`;
+    searchResults.hidden = false;
+  }
+
+  function jumpToCard(setId, num) {
+    searchResults.hidden = true;
+    searchInput.value = "";
+    searchInput.blur();
+    if (activeView !== "collection") switchView("collection");
+    switchSet(setId);   // a no-op when you're already in that set
+    // A filter could be hiding the card, so clear them.
+    if (activeFilter !== "all" || activeRarity !== "all") {
+      activeFilter = "all";
+      activeRarity = "all";
+      raritySelect.value = "all";
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
+      render();
+    }
+    const el = grid.querySelector(`[data-num="${num}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("flash");
+    setTimeout(() => el.classList.remove("flash"), 1600);
+  }
+
+  searchInput.addEventListener("input", runSearch);
+  searchInput.addEventListener("focus", runSearch);
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { searchInput.value = ""; runSearch(); searchInput.blur(); }
+    else if (e.key === "Enter") { const first = searchResults.querySelector(".sr"); if (first) first.click(); }
+  });
+  searchResults.addEventListener("click", (e) => {
+    const b = e.target.closest(".sr");
+    if (b) jumpToCard(b.dataset.set, Number(b.dataset.num));
+  });
+  // Tap anywhere else to close the results.
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search")) searchResults.hidden = true;
+  });
+  // "/" jumps to the search box on a keyboard.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "/" || ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+    searchInput.focus();
   });
 
   // ─── BINDER [read-only, ?u=username] ──────────────────────────────────────────
