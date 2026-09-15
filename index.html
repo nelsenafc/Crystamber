@@ -6,7 +6,15 @@
 <title>Crystamber</title>
 <!-- The first sync request starts its connection while the page is still loading. -->
 <link rel="preconnect" href="https://guyrhkzmogqcnemwyilx.supabase.co" crossorigin>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='white' stroke='black' stroke-width='5'/><path d='M 4 50 A 46 46 0 0 1 96 50 Z' fill='%23ee1515' stroke='black' stroke-width='5'/><rect x='4' y='47' width='92' height='6' fill='black'/><circle cx='50' cy='50' r='13' fill='white' stroke='black' stroke-width='5'/><circle cx='50' cy='50' r='5' fill='white' stroke='black' stroke-width='3'/></svg>" />
+<!-- Crystamber's own mark: a faceted amber gem [crystal + amber], no Pokemon branding. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g stroke='%230f0f1e' stroke-width='3' stroke-linejoin='round'><polygon points='10,36 30,18 40,36' fill='%23ffd166'/><polygon points='30,18 70,18 60,36 40,36' fill='%23ffe9a8'/><polygon points='70,18 90,36 60,36' fill='%23ffb703'/><polygon points='10,36 40,36 50,82' fill='%23f48c06'/><polygon points='40,36 60,36 50,82' fill='%23ffb703'/><polygon points='60,36 90,36 50,82' fill='%23dc5f00'/></g></svg>" />
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0f0f1e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Crystamber">
 <style>
   :root {
     --bg: #0f0f1e;
@@ -1040,10 +1048,135 @@
 
   /* <picture> only exists to offer AVIF; it must not change the layout. */
   .card-image-wrap picture, .mini picture { display: contents; }
+
+  /* ✎ Sets sits at the end of the era row. */
+  .era-tab.era-edit { margin-left: auto; color: var(--accent); }
+
+  /* My sets picker: a sheet from the bottom on a phone, a dialog on desktop. */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(8, 8, 20, 0.72);
+  }
+  .sheet {
+    width: 100%;
+    max-width: 560px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 20px 20px 0;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .sheet h2 { font-size: 1.15rem; margin-bottom: 4px; }
+  .sheet .sub { color: var(--text-dim); font-size: 0.84rem; line-height: 1.5; margin-bottom: 6px; }
+  .picker-era h3 {
+    margin: 16px 0 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .picker-sets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .picker-set {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 9px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .picker-set small { font-size: 0.72rem; font-weight: 500; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .picker-set.on { background: rgba(255,203,5,0.1); border-color: var(--accent); color: var(--text); }
+  .picker-set.on::before { content: "✓"; color: var(--accent); font-weight: 800; }
+  .sheet-actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 14px 0 18px;
+    background: var(--bg-2);
+  }
+  .sheet-actions .btn-primary { width: auto; }
+  @media (min-width: 601px) {
+    .sheet-backdrop { align-items: center; }
+  }
+
+  /* New version ready. */
+  #updateToast {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100% - 32px);
+    padding: 10px 12px 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    font-size: 0.85rem;
+  }
+  #updateToast button {
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    background: var(--accent);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* The fan-made disclaimer, on every page including shared binders. */
+  .legal {
+    max-width: 640px;
+    margin: 8px auto 0;
+    padding: 0 16px;
+    text-align: center;
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    opacity: 0.8;
+  }
 </style>
 </head>
 <body>
 <div id="syncBanner"></div>
+<div id="updateToast" hidden>
+  <span>A new version of Crystamber is ready.</span>
+  <button type="button" id="updateReload">Refresh</button>
+</div>
+<div class="sheet-backdrop" id="setPicker" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
+    <h2 id="pickerTitle">Which sets do you collect?</h2>
+    <div class="sub">Only these show in your tabs. Search still finds every card, and you can change this any time from ✎ Sets or the ⋯ menu.</div>
+    <div id="pickerBody"></div>
+    <div class="sheet-actions">
+      <button type="button" class="btn-ghost" id="pickerAll">Select all</button>
+      <button type="button" class="btn-primary" id="pickerSave">Save</button>
+    </div>
+  </div>
+</div>
 <div id="undoToast">
   <span id="undoToastMsg">Card removed from collection</span>
   <button onclick="undoRemove()">Undo</button>
@@ -1149,7 +1282,7 @@
 
   <footer>
     <span id="serverDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-dim);margin-right:6px;vertical-align:middle;" title="Connecting to cloud..."></span>
-    Progress saves automatically in your browser.
+    Saved to your account automatically.
     <span class="footer-tools">
       <button type="button" onclick="exportCollection()">Export backup</button>
       <button type="button" onclick="document.getElementById('importFile').click()">Import</button>
@@ -1159,6 +1292,8 @@
   </footer>
 
   </div>
+
+  <p class="legal">Crystamber is a fan-made collection tracker, not affiliated with or endorsed by Nintendo, The Pokémon Company, Creatures, GAME FREAK or Wizards of the Coast. Card names and images belong to their respective owners.</p>
 </div>
 
 <!-- Pinned and served from this site: a new supabase-js release can no longer
@@ -3305,15 +3440,33 @@
   ];
   const eraOf = (setId) => ERAS.find(e => e.sets.includes(setId));
 
-  document.getElementById("eraTabs").innerHTML = ERAS.map(e =>
-    `<button type="button" class="era-tab" data-era="${e.id}">${e.name}<span class="era-count"></span></button>`
-  ).join("");
+  // Which sets the switcher shows. Your own collection: the sets you picked,
+  // plus whichever one you're looking at [search can land you anywhere].
+  // Someone else's binder: the sets they actually have cards in.
+  function visibleSetIds() {
+    if (readOnly) {
+      const have = Object.keys(SETS).filter(id => Object.keys(((binderData || {})[id] || {}).owned || {}).length);
+      return have.length ? have : Object.keys(SETS);
+    }
+    if (!mySets || !mySets.length) return Object.keys(SETS);
+    return Object.keys(SETS).filter(id => mySets.includes(id) || id === activeSetId);
+  }
 
-  let renderedEra = null;
-  function renderSetTabs(era) {
-    if (renderedEra === era.id) return;
-    renderedEra = era.id;
-    document.getElementById("setTabs").innerHTML = era.sets.map(id => SETS[id]).map(s =>
+  // Eras with at least one visible set, then the visible sets in the active era.
+  // Only rebuilt when either changes.
+  let switcherKey = null;
+  function renderSwitcher() {
+    const vis = visibleSetIds();
+    const era = eraOf(activeSetId);
+    const key = vis.join() + "|" + era.id;
+    if (key === switcherKey) return;
+    switcherKey = key;
+    document.getElementById("eraTabs").innerHTML = ERAS
+      .filter(e => e.sets.some(id => vis.includes(id)))
+      .map(e => `<button type="button" class="era-tab${e.id === era.id ? " active" : ""}" data-era="${e.id}">${e.name}<span class="era-count"></span></button>`)
+      .join("")
+      + (readOnly ? "" : `<button type="button" class="era-tab era-edit" id="editSets" title="Choose which sets show">✎ Sets</button>`);
+    document.getElementById("setTabs").innerHTML = era.sets.filter(id => vis.includes(id)).map(id => SETS[id]).map(s =>
       `<button class="set-tab" data-set="${s.id}"><span class="st-name">${s.name}</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>`
     ).join("");
   }
@@ -3324,7 +3477,8 @@
   let owned = {}, conditions = {}, prices = {}, cardEditions = {}, wants = {}, forTrade = {};
 
   let uid = null;          // signed-in user; every collection key in localStorage is namespaced by it
-  let me = null;           // { id, username, binder_public }
+  let me = null;           // { id, username, binder_public, my_sets }
+  let mySets = null;       // set ids this person collects; null = not chosen, show everything
   let readOnly = false;    // true while viewing someone else's binder via ?u=
   let binderData = null;   // { setId: row } for the binder being viewed
   let binderName = "";
@@ -3967,8 +4121,11 @@
   });
 
   document.getElementById("eraTabs").addEventListener("click", (e) => {
+    if (e.target.closest("#editSets")) { openSetPicker(false); return; }
     const btn = e.target.closest(".era-tab");
-    if (btn) switchSet(ERAS.find(x => x.id === btn.dataset.era).sets[0]);
+    if (!btn) return;
+    const vis = visibleSetIds();
+    switchSet(ERAS.find(x => x.id === btn.dataset.era).sets.find(id => vis.includes(id)));
   });
 
   // ─── PROGRESS ────────────────────────────────────────────────────────────────
@@ -4434,11 +4591,7 @@
 
   function syncSetHeader() {
     const s = SETS[activeSetId];
-    const era = eraOf(activeSetId);
-    renderSetTabs(era);
-    document.querySelectorAll("#eraTabs .era-tab").forEach(b =>
-      b.classList.toggle("active", b.dataset.era === era.id)
-    );
+    renderSwitcher();
     document.getElementById("setTitle").textContent = s.name;
     document.getElementById("totalCount").textContent = s.cards.length;
     document.querySelectorAll("#setTabs .set-tab").forEach(b =>
@@ -4661,6 +4814,7 @@
       <details class="menu" id="acctMenu">
         <summary class="btn-ghost" aria-label="More">⋯</summary>
         <div class="menu-pop">
+          <button type="button" data-act="sets">My sets</button>
           <button type="button" data-act="export">Export backup</button>
           <button type="button" data-act="import">Import backup</button>
           ${me.binder_public ? `<button type="button" data-act="private">Make binder private</button>` : ""}
@@ -4672,7 +4826,8 @@
       const b = e.target.closest("button");
       if (!b) return;
       bar.querySelector("#acctMenu").open = false;
-      if (b.dataset.act === "export") exportCollection();
+      if (b.dataset.act === "sets") openSetPicker(false);
+      else if (b.dataset.act === "export") exportCollection();
       else if (b.dataset.act === "import") document.getElementById("importFile").click();
       else if (b.dataset.act === "private") setBinderPublic(false);
       else if (b.dataset.act === "signout") signOut();
@@ -4712,21 +4867,97 @@
     location.href = location.pathname;
   }
 
+  // ─── MY SETS ──────────────────────────────────────────────────────────────────
+  // The sets each person collects. Saved to their profile so every device agrees,
+  // with a copy on this device so the tabs are right before the profile loads,
+  // or when it can't.
+
+  function loadMySets() {
+    try {
+      const v = JSON.parse(localStorage.getItem(lk("mySets")) || "null");
+      return Array.isArray(v) ? v.filter(id => SETS[id]) : null;
+    } catch (_) { return null; }
+  }
+
+  function applyMySets(ids) {
+    mySets = ids.filter(id => SETS[id]);
+    localStorage.setItem(lk("mySets"), JSON.stringify(mySets));
+    switcherKey = null;
+    if (mySets.length && !mySets.includes(activeSetId)) switchSet(mySets[0]);
+    else { syncSetHeader(); updateProgress(); }
+  }
+
+  function ownedCountsBySet() {
+    const out = {};
+    for (const id in SETS) {
+      out[id] = id === activeSetId ? Object.keys(owned).length : Object.keys(loadOwned(SETS[id].storageKey)).length;
+    }
+    return out;
+  }
+
+  function openSetPicker(firstRun) {
+    const picker = document.getElementById("setPicker");
+    const body = document.getElementById("pickerBody");
+    const counts = ownedCountsBySet();
+    // The first time, start from the sets they already have cards in.
+    const chosen = new Set(mySets && mySets.length ? mySets : Object.keys(SETS).filter(id => counts[id] > 0));
+    const draw = () => {
+      body.innerHTML = ERAS.map(e => `
+        <div class="picker-era">
+          <h3>${e.name}</h3>
+          <div class="picker-sets">${e.sets.map(id => `
+            <button type="button" class="picker-set${chosen.has(id) ? " on" : ""}" data-set="${id}" aria-pressed="${chosen.has(id)}">
+              ${escapeAttr(SETS[id].name)}<small>${counts[id] ? counts[id] + "/" : ""}${SETS[id].cards.length}</small>
+            </button>`).join("")}
+          </div>
+        </div>`).join("");
+      document.getElementById("pickerSave").disabled = chosen.size === 0;
+    };
+    body.onclick = (e) => {
+      const b = e.target.closest(".picker-set");
+      if (!b) return;
+      if (chosen.has(b.dataset.set)) chosen.delete(b.dataset.set); else chosen.add(b.dataset.set);
+      draw();
+    };
+    document.getElementById("pickerAll").onclick = () => { Object.keys(SETS).forEach(id => chosen.add(id)); draw(); };
+    document.getElementById("pickerSave").onclick = async () => {
+      const ids = Object.keys(SETS).filter(id => chosen.has(id));
+      picker.hidden = true;
+      applyMySets(ids);
+      const { error } = await sb.from("profiles").update({ my_sets: ids }).eq("id", uid);
+      if (error) alert("Saved on this device, but not to your account yet: " + error.message);
+    };
+    // The first run has to end in a choice; after that, tapping outside closes it.
+    picker.onclick = (e) => { if (!firstRun && e.target === picker) picker.hidden = true; };
+    document.getElementById("pickerTitle").textContent = firstRun ? "Which sets do you collect?" : "Your sets";
+    draw();
+    picker.hidden = false;
+  }
+
   async function startApp(user) {
     if (uid) return;
     uid = user.id;
     me = { id: uid, username: (user.user_metadata && user.user_metadata.username) || "you", binder_public: false };
     bootedAt = Date.now();
+    mySets = loadMySets();
+    if (mySets && mySets.length && !mySets.includes(activeSetId)) activeSetId = mySets[0];
     showScreen("appRoot");
     renderAccountBar();
     loadSetState(activeSetId);
     syncSetHeader();
     updateProgress();
     render();
-    initialLoad();
+    const firstLoad = initialLoad();
 
-    const { data: prof } = await sb.from("profiles").select("id, username, binder_public").eq("id", uid).maybeSingle();
-    if (prof) { me = prof; renderAccountBar(); }
+    const { data: prof } = await sb.from("profiles").select("id, username, binder_public, my_sets").eq("id", uid).maybeSingle();
+    if (prof) {
+      me = prof;
+      renderAccountBar();
+      // Never chosen: ask once, after the cloud copy of their cards has landed
+      // so the sets they already collect come pre-ticked.
+      if (prof.my_sets) applyMySets(prof.my_sets);
+      else firstLoad.then(() => openSetPicker(true));
+    }
 
     activeGroupId = localStorage.getItem(lk("activeGroup"));
     const pending = localStorage.getItem("pendingJoin");
@@ -5214,6 +5445,18 @@
   // with the first paint.
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+
+    // A new deploy: this open came from the cache and the worker found a newer
+    // page behind it, or a new worker took over. One tap loads the new version.
+    const showUpdate = () => { document.getElementById("updateToast").hidden = false; };
+    navigator.serviceWorker.addEventListener("message", (e) => {
+      if (e.data && e.data.type === "update-available") showUpdate();
+    });
+    // Deliver anything the worker sent before this listener existed.
+    navigator.serviceWorker.startMessages();
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController) showUpdate(); });
+    document.getElementById("updateReload").onclick = () => location.reload();
   }
 </script>
 </body>

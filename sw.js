@@ -46,16 +46,36 @@ self.addEventListener('fetch', (e) => {
   // Every page URL [/?u= binder links, /?join= invites] is the same app, so
   // they share one cached copy of the page.
   if (req.mode === 'navigate' && (url.pathname === '/' || url.pathname === '/index.html')) {
-    const fresh = fetch(req).then(res => {
-      const copy = res.clone();
-      if (res.ok) caches.open(SHELL).then(c => c.put('/', copy));
-      return res;
-    }).catch(() => null);
-    e.waitUntil(fresh);
+    // Copies are taken the moment the response lands, before the page can start
+    // reading it - a response whose body is in use can no longer be cloned.
+    const network = fetch(req)
+      .then(res => ({ res, copy: res.ok ? res.clone() : null, probe: res.ok ? res.clone() : null }))
+      .catch(() => null);
+    // Refresh the cached page, and if it changed, tell open tabs so the app can
+    // offer a one-tap refresh instead of waiting for the next visit.
+    e.waitUntil(network.then(async (n) => {
+      if (!n || !n.copy) return;
+      const cache = await caches.open(SHELL);
+      const old = await cache.match('/');
+      const changed = !!old && (await old.text()) !== (await n.probe.text());
+      await cache.put('/', n.copy);
+      if (!changed) return;
+      // Other open tabs are ready now.
+      for (const client of await self.clients.matchAll({ type: 'window' })) {
+        if (client.id !== e.resultingClientId) client.postMessage({ type: 'update-available' });
+      }
+      // The tab being opened may not exist yet - on a fast connection the new page
+      // arrives before the browser has created it. Keep asking for a few seconds.
+      for (let i = 0; i < 20; i++) {
+        const tab = e.resultingClientId && await self.clients.get(e.resultingClientId);
+        if (tab) { tab.postMessage({ type: 'update-available' }); return; }
+        await new Promise(r => setTimeout(r, 250));
+      }
+    }));
     e.respondWith(
       caches.open(SHELL)
         .then(c => c.match('/'))
-        .then(cached => cached || fresh.then(res => res || new Response('Offline and not cached yet.', { status: 503 })))
+        .then(cached => cached || network.then(n => n ? n.res : new Response('Offline and not cached yet.', { status: 503 })))
     );
     return;
   }

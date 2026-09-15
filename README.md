@@ -35,6 +35,9 @@ Single static `index.html` - no build step. Supabase for auth and cloud sync. `s
 - **supabase-js is pinned and vendored** at `vendor/supabase-js-2.116.0.js` [the UMD build from npm], loaded at the end of `<body>`. A new release can't reach the live app untested. To upgrade, download the new version under its own file name, change the `<script>` tag, and change `LIBRARY` in `sw.js`.
 - **`sw.js` makes the app work offline.** The page is served from cache and refreshed in the background, so a deploy shows up on the open after next. Images and the library are cache-first, and only what someone has viewed is cached. Supabase requests are never cached - the app's own sync queue handles offline edits. Offline with an expired token, the app opens from the session stored on the device. To switch the worker off, deploy a `sw.js` that calls `self.registration.unregister()`.
 - A `preconnect` hint in `<head>` opens the Supabase connection while the page loads.
+- **Update prompt.** When the worker's background refresh finds a page that differs from the cached one, it messages open tabs and the app shows "A new version of Crystamber is ready" with a Refresh button. A new worker taking over does the same.
+- **Installable.** `manifest.webmanifest` and `icons/` let phones add it to the home screen and open it full screen. The icon and favicon are Crystamber's own mark - a faceted amber gem drawn with Pillow - with no Pokemon branding. A fan-made disclaimer sits at the bottom of every page, shared binders included.
+- **My sets.** Each person picks the sets they collect; the era and set tabs only show those, plus whichever set search lands them in. Asked once on the first visit [pre-ticked from the sets they already have cards in], changed later from ✎ Sets or the ⋯ menu.
 
 ## Run locally
 
@@ -52,7 +55,7 @@ Email and password through Supabase Auth. The username is passed as signup metad
 
 Schema lives in `supabase/migrations/`.
 
-- `profiles` - username and whether the binder is public. Usernames are readable by anyone so binder links resolve. The only column a user can change is `binder_public`.
+- `profiles` - username, whether the binder is public, and `my_sets` [the sets they collect - null until they choose, which is when the app asks]. Usernames are readable by anyone so binder links resolve. The only columns a user can change are `binder_public` and `my_sets`.
 - `user_sets` - one row per `(user_id, set_id)`: owned, conditions, prices, card_editions, wants, for_trade. Owner-only RLS.
 - `groups`, `group_members` - created only through the `create_group` and `join_group` functions.
 - Prices are private. Nobody reads another person's `user_sets` directly - `get_binder` and `group_collections` are security definer functions that never select the prices column.
