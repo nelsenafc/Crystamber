@@ -1026,6 +1026,46 @@
     cursor: pointer;
   }
   .layout-toggle button.active { background: var(--surface-2); color: var(--text); }
+  .layout-toggle button svg { display: block; width: 15px; height: 15px; margin: 2px 0; }
+
+  /* Gallery: calm white tiles - art, name, one line of detail. Everything else
+     lives on the card's detail page, so the tile carries no chips. */
+  .grid.gallery { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+  .grid.gallery .card {
+    border: none;
+    border-radius: 16px;
+    background: var(--bg-2);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08);
+  }
+  .grid.gallery .card:hover,
+  .grid.gallery .card.owned:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 10px 24px rgba(0,0,0,0.14); }
+  .grid.gallery .card.owned { box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08); }
+  .g-art { position: relative; padding: 14px 14px 0; }
+  .g-art img, .g-art .placeholder {
+    display: block; width: 100%; aspect-ratio: 245 / 342;
+    border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  }
+  .grid.gallery .card:not(.owned) .g-art img { filter: grayscale(1); opacity: 0.35; box-shadow: none; }
+  .g-badge {
+    position: absolute; top: 8px; right: 8px;
+    display: grid; place-items: center; width: 26px; height: 26px;
+    border-radius: 50%; font-size: 0.8rem; font-weight: 700; line-height: 1;
+  }
+  .g-badge.own  { background: var(--accent); color: #1a1a2e; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+  .g-badge.star { background: var(--bg-2); color: var(--text-dim); font-size: 0.95rem; box-shadow: 0 1px 6px rgba(0,0,0,0.18); cursor: pointer; }
+  .g-badge.star.on { color: var(--accent); }
+  .g-info { padding: 11px 14px 14px; }
+  .g-name { font-size: 0.95rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .g-meta { margin-top: 1px; font-size: 0.78rem; color: var(--text-dim); }
+  .g-detail { margin-top: 3px; font-size: 0.8rem; color: var(--text); }
+  .g-detail.dim { color: var(--text-dim); }
+  .g-detail.miss { color: var(--accent); font-weight: 600; }
+  @media (max-width: 600px) {
+    .grid.gallery { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .g-art { padding: 10px 10px 0; }
+    .g-info { padding: 9px 11px 12px; }
+    .g-badge { top: 5px; right: 5px; }
+  }
 
   /* Quick list: one row per card, no images - for ticking off a pile fast. */
   .grid.list {
@@ -1466,6 +1506,7 @@
         <div class="layout-toggle" id="layoutToggle" role="group" aria-label="Layout">
           <button type="button" data-layout="grid" title="Card grid" aria-label="Card grid">▦</button>
           <button type="button" data-layout="list" title="Quick list" aria-label="Quick list">☰</button>
+          <button type="button" data-layout="gallery" title="Gallery" aria-label="Gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="10" rx="2"/><rect x="13.5" y="3" width="7.5" height="10" rx="2"/><path d="M3 17h7.5M13.5 17h7.5M3 21h5M13.5 21h5" stroke-linecap="round"/></svg></button>
         </div>
         <select id="rarityFilter" aria-label="Rarity">
           <option value="all">All rarities</option>
@@ -4585,11 +4626,12 @@
 
   // Grid shows the cards; the quick list is one row per card with no images,
   // for ticking off a pile fast. Remembered per device.
-  let layout = localStorage.getItem("layout") === "list" ? "list" : "grid";
+  let layout = ["list", "gallery"].includes(localStorage.getItem("layout")) ? localStorage.getItem("layout") : "grid";
   const layoutToggle = document.getElementById("layoutToggle");
 
   function applyLayout() {
     grid.classList.toggle("list", layout === "list");
+    grid.classList.toggle("gallery", layout === "gallery");
     layoutToggle.querySelectorAll("button").forEach(b =>
       b.classList.toggle("active", b.dataset.layout === layout));
   }
@@ -4674,7 +4716,24 @@
         ${isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : ""}
         ${isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}`;
 
-    el.innerHTML = layout === "list" ? `
+    const detail = isOwn
+      ? [condValue, editionValue ? editionLabel(activeSetId, editionValue) : ""].filter(Boolean).join(" · ")
+      : "";
+    el.innerHTML = layout === "gallery" ? `
+      <div class="g-art">
+        ${cardPicture(activeSetId, card.num, `alt="${escapeAttr(card.name)}" loading="${imgLoading}" decoding="async"
+             onerror="this.outerHTML='<div class=&quot;placeholder&quot;><div class=&quot;ph-num&quot;>#${cardLabel(card)}</div><div class=&quot;ph-label&quot;>no image</div></div>'"`)}
+        ${isOwn ? `<span class="g-badge own" aria-hidden="true">✓</span>`
+          : (!readOnly || isWanted) ? `<span class="g-badge star${isWanted ? " on" : ""}" title="${isWanted ? "On your want list" : "Add to your want list"}">${isWanted ? "★" : "☆"}</span>` : ""}
+      </div>
+      <div class="g-info">
+        <div class="g-name">${card.name}</div>
+        <div class="g-meta">${escapeAttr(meta)} · No. ${cardLabel(card)}</div>
+        ${isOwn
+          ? `<div class="g-detail${detail ? "" : " dim"}">${escapeAttr(detail || "Tap to add details")}</div>`
+          : `<div class="g-detail miss">${isWanted ? "Wanted" : readOnly ? "Missing" : "Missing · tap to add"}</div>`}
+      </div>
+    ` : layout === "list" ? `
       <span class="row-check" aria-hidden="true">✓</span>
       <span class="row-num">#${cardLabel(card)}</span>
       <div class="row-main">
@@ -4711,6 +4770,7 @@
       if (e.target.closest(".card-condition")) return;
       if (e.target.closest(".card-price")) return;
       if (e.target.closest(".card-flag")) return;
+      if (e.target.closest(".g-badge.star")) { toggleWant(card.num); return; }
       if (isOwned(card.num)) openCardDetail(card.num);
       else toggle(card.num);
     });
