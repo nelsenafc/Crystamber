@@ -793,46 +793,36 @@
   [hidden] { display: none !important; }
 
   /* Accounts */
-  /* Landing: what a stranger sees before signing in. No card art here - only
-     the set symbols the app already uses. */
-  .landing { max-width: 440px; margin: 4vh auto 0; text-align: center; }
-  .ld-brand { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent); }
-  .ld-head { margin-top: 14px; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--text); }
-  .ld-sub { margin-top: 10px; font-size: 1rem; color: var(--text-dim); }
-  .ld-panel {
-    margin-top: 26px; padding: 8px 18px;
-    border-radius: 20px; background: var(--surface);
-    border: 1px solid var(--border);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
-    text-align: left;
+  /* Landing: one screen - headline, one image, two buttons. The form opens in
+     a sheet, so a returning collector is two taps from their cards. */
+  .landing {
+    max-width: 460px; min-height: calc(100vh - 140px); margin: 0 auto;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; padding: 24px 0;
   }
-  .ld-row {
-    display: grid; grid-template-columns: 26px 1fr auto; align-items: center;
-    column-gap: 12px; row-gap: 6px; padding: 12px 0;
+  .ld-brand { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent); }
+  .ld-head { margin-top: 12px; font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--text); }
+  .ld-sub { margin-top: 10px; font-size: 1.02rem; color: var(--text-dim); }
+  .ld-hero { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; margin-top: 28px; border-radius: 22px; background: var(--surface-2); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+  .ld-actions { display: flex; gap: 10px; width: 100%; margin-top: 24px; }
+  .ld-btn {
+    flex: 1; padding: 14px 16px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font: inherit; font-size: 0.98rem; font-weight: 700; cursor: pointer;
   }
-  .ld-row + .ld-row { border-top: 1px solid var(--border); }
-  .ld-sym {
-    grid-row: span 2; width: 24px; height: 24px; background: var(--text);
-    -webkit-mask: var(--sym) center / contain no-repeat; mask: var(--sym) center / contain no-repeat;
+  .ld-btn.primary { border-color: transparent; background: var(--accent-fill); color: #1a1a2e; }
+  @media (max-width: 600px) {
+    .landing { min-height: calc(100vh - 150px); }
+    .ld-head { font-size: 2.3rem; }
+    .ld-actions { flex-direction: column; }
   }
-  .ld-name  { font-size: 0.95rem; font-weight: 700; color: var(--text); }
-  .ld-count { font-size: 0.85rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-  .ld-bar { grid-column: 2 / -1; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-  .ld-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent-fill); }
-  .ld-shots { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .ld-shot { margin: 0; text-align: left; }
-  .ld-shot.wide { grid-column: 1 / -1; }
-  .ld-shot img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; background: var(--surface-2); }
-  .ld-shot figcaption { margin-top: 8px; font-size: 0.85rem; font-weight: 600; color: var(--text); }
-  .auth-wrap {
-    margin: 28px 0 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 18px 18px 20px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
-    text-align: left;
+  .auth-sheet { max-width: 420px; padding: 14px 18px 22px; }
+  .auth-close {
+    margin: -4px -4px 10px auto;
+    display: grid; place-items: center; width: 34px; height: 34px;
+    border: none; border-radius: 50%; background: var(--surface-2); color: var(--text); cursor: pointer;
   }
+  .auth-close svg { width: 16px; height: 16px; }
   /* The switch stays neutral so the one amber thing in the box is the button. */
   .auth-tabs { display: flex; gap: 2px; padding: 3px; margin-bottom: 18px; border-radius: 12px; background: var(--surface-2); }
   .auth-tab {
@@ -1492,21 +1482,18 @@
       <div class="ld-brand">Crystamber</div>
       <h1 class="ld-head">Finish the set.</h1>
       <p class="ld-sub">A calm tracker for vintage WotC collectors.</p>
-
-      <div class="ld-panel" aria-label="An example collection">
-        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/base.svg)"></i><span class="ld-name">Base</span><span class="ld-count">96/102</span><span class="ld-bar"><i style="width:94%"></i></span></div>
-        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/jungle.png)"></i><span class="ld-name">Jungle</span><span class="ld-count">53/64</span><span class="ld-bar"><i style="width:83%"></i></span></div>
-        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/fossil.png)"></i><span class="ld-name">Fossil</span><span class="ld-count">31/62</span><span class="ld-bar"><i style="width:50%"></i></span></div>
-        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/teamrocket.png)"></i><span class="ld-name">Team Rocket</span><span class="ld-count">10/83</span><span class="ld-bar"><i style="width:12%"></i></span></div>
+      <img class="ld-hero" src="img/landing/binder.webp" alt="A collector's binder on a desk" width="880" height="660" decoding="async">
+      <div class="ld-actions">
+        <button type="button" class="ld-btn primary" id="ldSignup">Create account</button>
+        <button type="button" class="ld-btn" id="ldSignin">Sign in</button>
       </div>
-
-      <div class="ld-shots">
-        <figure class="ld-shot wide"><img src="img/landing/binder.webp" alt="A collector's binder on a desk" width="880" height="660" loading="lazy" decoding="async"><figcaption>Every English WotC set, Base to Skyridge</figcaption></figure>
-        <figure class="ld-shot"><img src="img/landing/condition.webp" alt="A loupe beside a sleeved card" width="880" height="660" loading="lazy" decoding="async"><figcaption>Condition, edition, price</figcaption></figure>
-        <figure class="ld-shot"><img src="img/landing/offline.webp" alt="A phone on an armchair beside a cup of tea" width="880" height="660" loading="lazy" decoding="async"><figcaption>Works offline</figcaption></figure>
-      </div>
-
-    <div class="auth-wrap">
+    </div>
+    <div class="sheet-backdrop" id="authSheet" hidden>
+      <div class="sheet auth-sheet" role="dialog" aria-modal="true" aria-label="Sign in or create an account">
+        <button type="button" class="auth-close" id="authClose" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      <div class="auth-wrap">
       <div class="auth-tabs" id="authTabs">
         <button type="button" class="auth-tab" data-mode="signup">Create account</button>
         <button type="button" class="auth-tab active" data-mode="signin">Sign in</button>
@@ -1529,7 +1516,8 @@
       </form>
       <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
       <div class="auth-note" id="joinNote" hidden></div>
-    </div>
+      </div>
+      </div>
     </div>
   </div>
 
@@ -5229,10 +5217,24 @@
     document.querySelectorAll("#authTabs .auth-tab").forEach(b =>
       b.classList.toggle("active", b.dataset.mode === mode));
     document.getElementById("usernameField").hidden = mode !== "signup";
+    document.getElementById("forgotBtn").hidden = mode === "signup";
     document.getElementById("authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
     document.getElementById("authPassword").autocomplete = mode === "signup" ? "new-password" : "current-password";
     authMsg("");
   }
+
+  const authSheet = document.getElementById("authSheet");
+  function openAuthSheet(mode) {
+    if (mode) setAuthMode(mode);
+    authSheet.hidden = false;
+    document.getElementById(authMode === "signup" ? "authUsername" : "authEmail").focus();
+  }
+  function closeAuthSheet() { authSheet.hidden = true; }
+  document.getElementById("ldSignup").onclick = () => openAuthSheet("signup");
+  document.getElementById("ldSignin").onclick = () => openAuthSheet("signin");
+  document.getElementById("authClose").onclick = closeAuthSheet;
+  authSheet.addEventListener("click", (e) => { if (e.target === authSheet) closeAuthSheet(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !authSheet.hidden) closeAuthSheet(); });
 
   function showAuth(note) {
     showScreen("authScreen");
@@ -5248,8 +5250,13 @@
       let returning = false;
       try { returning = Object.keys(localStorage).some(k => k.startsWith("u:")); } catch (e) {}
       setAuthMode(returning ? "signin" : "signup");
+      // The likelier button wears the amber.
+      document.getElementById("ldSignin").classList.toggle("primary", returning);
+      document.getElementById("ldSignup").classList.toggle("primary", !returning);
     }
     if (note) authMsg(note);
+    // An invite or a message to read: open the form straight away.
+    if (pending || note) openAuthSheet();
   }
 
   document.getElementById("authTabs").addEventListener("click", (e) => {
