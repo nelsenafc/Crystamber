@@ -791,17 +791,55 @@
   [hidden] { display: none !important; }
 
   /* Accounts */
-  .auth-wrap {
-    max-width: 380px;
-    margin: 8vh auto 0;
-    background: linear-gradient(135deg, var(--surface) 0%, var(--bg-2) 100%);
+  /* Landing: what a stranger sees before signing in. No card art here - only
+     the set symbols the app already uses. */
+  .landing { max-width: 440px; margin: 4vh auto 0; text-align: center; }
+  .ld-brand { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent); }
+  .ld-head { margin-top: 14px; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--text); }
+  .ld-sub { margin-top: 10px; font-size: 1rem; color: var(--text-dim); }
+  .ld-panel {
+    margin-top: 26px; padding: 8px 18px;
+    border-radius: 20px; background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px 24px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
+    text-align: left;
   }
-  .auth-tabs { display: flex; gap: 8px; margin: 18px 0 16px; }
-  .auth-tabs .set-tab { flex: 1; }
+  .ld-row {
+    display: grid; grid-template-columns: 26px 1fr auto; align-items: center;
+    column-gap: 12px; row-gap: 6px; padding: 12px 0;
+  }
+  .ld-row + .ld-row { border-top: 1px solid var(--border); }
+  .ld-sym {
+    grid-row: span 2; width: 24px; height: 24px; background: var(--text);
+    -webkit-mask: var(--sym) center / contain no-repeat; mask: var(--sym) center / contain no-repeat;
+  }
+  .ld-name  { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+  .ld-count { font-size: 0.85rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .ld-bar { grid-column: 2 / -1; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .ld-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+  .ld-points { list-style: none; margin: 22px auto 0; display: grid; gap: 12px; text-align: left; max-width: 340px; }
+  .ld-points li { display: flex; align-items: center; gap: 12px; font-size: 0.92rem; color: var(--text); }
+  .ld-points svg { flex: 0 0 auto; width: 36px; height: 36px; padding: 8px; border-radius: 50%; background: rgba(255,203,5,0.14); color: var(--accent); }
+  .auth-wrap {
+    margin: 28px 0 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px 18px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
+    text-align: left;
+  }
+  .auth-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; border-radius: 999px; background: var(--surface-2); }
+  .auth-tab {
+    flex: 1; padding: 9px 12px; border: none; border-radius: 999px;
+    background: transparent; color: var(--text-dim);
+    font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  }
+  .auth-tab.active { background: var(--accent); color: #1a1a2e; }
+  @media (max-width: 600px) {
+    .landing { margin-top: 2vh; }
+    .ld-head { font-size: 2.2rem; }
+  }
   .field { display: block; margin-bottom: 12px; }
   .field span { display: block; font-size: 0.78rem; color: var(--text-dim); margin-bottom: 4px; }
   .field input, .inline-form input {
@@ -818,10 +856,10 @@
   .btn-primary {
     width: 100%;
     background: var(--accent);
-    color: #000;
+    color: #1a1a2e;
     border: none;
-    border-radius: 8px;
-    padding: 11px 16px;
+    border-radius: 999px;
+    padding: 12px 16px;
     font-weight: 700;
     font-size: 0.92rem;
     cursor: pointer;
@@ -1440,16 +1478,32 @@
 <div class="container">
 
   <div id="authScreen" hidden>
+    <div class="landing">
+      <div class="ld-brand">Crystamber</div>
+      <h1 class="ld-head">Finish the set.</h1>
+      <p class="ld-sub">A calm tracker for vintage WotC collectors.</p>
+
+      <div class="ld-panel" aria-label="An example collection">
+        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/base.svg)"></i><span class="ld-name">Base</span><span class="ld-count">96/102</span><span class="ld-bar"><i style="width:94%"></i></span></div>
+        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/jungle.png)"></i><span class="ld-name">Jungle</span><span class="ld-count">53/64</span><span class="ld-bar"><i style="width:83%"></i></span></div>
+        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/fossil.png)"></i><span class="ld-name">Fossil</span><span class="ld-count">31/62</span><span class="ld-bar"><i style="width:50%"></i></span></div>
+        <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/teamrocket.png)"></i><span class="ld-name">Team Rocket</span><span class="ld-count">10/83</span><span class="ld-bar"><i style="width:12%"></i></span></div>
+      </div>
+
+      <ul class="ld-points">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="11" height="15" rx="2"/><path d="M17 6.5 20 7.6a1.5 1.5 0 0 1 .9 1.9l-3.6 10a1.5 1.5 0 0 1-1.9.9L12 19"/></svg>All 18 English WotC sets, Base to Skyridge</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>Condition, edition and price on every card</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></svg>Works offline, saves when you're back</li>
+      </ul>
+
     <div class="auth-wrap">
-      <h1>Crystamber</h1>
-      <div class="subtitle" style="margin-bottom:0">Track your WotC-era Pokemon collection with your group.</div>
       <div class="auth-tabs" id="authTabs">
-        <button type="button" class="set-tab active" data-mode="signin">Sign in</button>
-        <button type="button" class="set-tab" data-mode="signup">Create account</button>
+        <button type="button" class="auth-tab" data-mode="signup">Create account</button>
+        <button type="button" class="auth-tab active" data-mode="signin">Sign in</button>
       </div>
       <form id="authForm" novalidate>
         <label class="field" id="usernameField" hidden>
-          <span>Username - this is what your group sees</span>
+          <span>Pick a username</span>
           <input id="authUsername" autocomplete="nickname" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="e.g. ashketchum">
         </label>
         <label class="field">
@@ -1465,6 +1519,7 @@
       </form>
       <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
       <div class="auth-note" id="joinNote" hidden></div>
+    </div>
     </div>
   </div>
 
@@ -5161,7 +5216,7 @@
 
   function setAuthMode(mode) {
     authMode = mode;
-    document.querySelectorAll("#authTabs .set-tab").forEach(b =>
+    document.querySelectorAll("#authTabs .auth-tab").forEach(b =>
       b.classList.toggle("active", b.dataset.mode === mode));
     document.getElementById("usernameField").hidden = mode !== "signup";
     document.getElementById("authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
@@ -5177,12 +5232,18 @@
     if (pending) {
       joinNote.textContent = "You've been invited to a group. Sign in or create an account and you'll join it automatically.";
       setAuthMode("signup");   // invited people are almost always new
+    } else {
+      // A browser that has held someone's cards before is a returning
+      // collector; everyone else lands on Create account.
+      let returning = false;
+      try { returning = Object.keys(localStorage).some(k => k.startsWith("u:")); } catch (e) {}
+      setAuthMode(returning ? "signin" : "signup");
     }
     if (note) authMsg(note);
   }
 
   document.getElementById("authTabs").addEventListener("click", (e) => {
-    const b = e.target.closest(".set-tab");
+    const b = e.target.closest(".auth-tab");
     if (b) setAuthMode(b.dataset.mode);
   });
 
