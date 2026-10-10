@@ -817,9 +817,11 @@
   .ld-count { font-size: 0.85rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .ld-bar { grid-column: 2 / -1; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
   .ld-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
-  .ld-points { list-style: none; margin: 22px auto 0; display: grid; gap: 12px; text-align: left; max-width: 340px; }
-  .ld-points li { display: flex; align-items: center; gap: 12px; font-size: 0.92rem; color: var(--text); }
-  .ld-points svg { flex: 0 0 auto; width: 36px; height: 36px; padding: 8px; border-radius: 50%; background: rgba(255,203,5,0.14); color: var(--accent); }
+  .ld-shots { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ld-shot { margin: 0; text-align: left; }
+  .ld-shot.wide { grid-column: 1 / -1; }
+  .ld-shot img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; background: var(--surface-2); }
+  .ld-shot figcaption { margin-top: 8px; font-size: 0.85rem; font-weight: 600; color: var(--text); }
   .auth-wrap {
     margin: 28px 0 0;
     background: var(--surface);
@@ -1490,11 +1492,11 @@
         <div class="ld-row"><i class="ld-sym" style="--sym:url(img/symbols/teamrocket.png)"></i><span class="ld-name">Team Rocket</span><span class="ld-count">10/83</span><span class="ld-bar"><i style="width:12%"></i></span></div>
       </div>
 
-      <ul class="ld-points">
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="11" height="15" rx="2"/><path d="M17 6.5 20 7.6a1.5 1.5 0 0 1 .9 1.9l-3.6 10a1.5 1.5 0 0 1-1.9.9L12 19"/></svg>All 18 English WotC sets, Base to Skyridge</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg>Condition, edition and price on every card</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/></svg>Works offline, saves when you're back</li>
-      </ul>
+      <div class="ld-shots">
+        <figure class="ld-shot wide"><img src="img/landing/binder.webp" alt="A collector's binder on a desk" width="880" height="660" loading="lazy" decoding="async"><figcaption>Every English WotC set, Base to Skyridge</figcaption></figure>
+        <figure class="ld-shot"><img src="img/landing/condition.webp" alt="A loupe beside a sleeved card" width="880" height="660" loading="lazy" decoding="async"><figcaption>Condition, edition, price</figcaption></figure>
+        <figure class="ld-shot"><img src="img/landing/offline.webp" alt="A phone on an armchair beside a cup of tea" width="880" height="660" loading="lazy" decoding="async"><figcaption>Works offline</figcaption></figure>
+      </div>
 
     <div class="auth-wrap">
       <div class="auth-tabs" id="authTabs">
