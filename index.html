@@ -93,18 +93,15 @@
   .set-switch .set-tab {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: auto auto;
-    align-items: baseline;
-    column-gap: 10px;
-    row-gap: 7px;
-    min-width: 112px;
-    padding: 9px 12px 8px;
+    row-gap: 4px;
+    min-width: 104px;
+    padding: 9px 12px 10px;
     text-align: left;
     background: transparent;
   }
   .set-switch .st-name  { font-size: 0.86rem; font-weight: 600; color: var(--text); }
-  .set-switch .st-count { justify-self: end; font-size: 0.72rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-  .set-switch .st-bar   { grid-column: 1 / -1; height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; }
+  .set-switch .st-count { font-size: 0.78rem; color: var(--text); font-variant-numeric: tabular-nums; }
+  .set-switch .st-bar   { margin-top: 4px; height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; }
   .set-switch .st-bar i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--accent); }
   .set-switch .set-tab.done .st-bar i { background: var(--success); }
   .set-switch .set-tab.active { background: rgba(255,203,5,0.08); border-color: var(--accent); }
@@ -1054,17 +1051,24 @@
   .era-tab.era-edit { margin-left: auto; color: var(--accent); }
   .set-switch .set-edit {
     flex: 0 0 auto;
-    padding: 0 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 76px;
+    padding: 0 12px;
     background: transparent;
     border: 1px dashed var(--border);
     border-radius: 10px;
     color: var(--accent);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
   }
+  .set-switch .set-edit svg { width: 18px; height: 18px; }
   .set-switch .set-edit:hover { border-color: var(--accent); }
 
   /* My sets picker: a sheet from the bottom on a phone, a dialog on desktop. */
@@ -3505,7 +3509,9 @@
     switcherKey = key;
     const eras = ERAS.filter(e => e.sets.some(id => vis.includes(id)));
     const oneEra = eras.length < 2;
-    const editBtn = (cls) => readOnly ? "" : `<button type="button" class="${cls}" id="editSets" title="Choose which sets show">✎ Sets</button>`;
+    const editBtn = (cls) => readOnly ? "" : cls === "set-edit"
+      ? `<button type="button" class="set-edit" id="editSets" title="Choose which sets show"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Edit sets</button>`
+      : `<button type="button" class="${cls}" id="editSets" title="Choose which sets show">✎ Sets</button>`;
     const eraTabs = document.getElementById("eraTabs");
     eraTabs.hidden = oneEra;
     eraTabs.innerHTML = oneEra ? "" : eras
