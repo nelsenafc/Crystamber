@@ -39,6 +39,7 @@
     --success: #4ade80;
     --warn: #fbbf24;
     --danger: #f87171;
+    --accent-fill: var(--accent);
     color-scheme: dark;
   }
   :root[data-theme="light"] {
@@ -50,6 +51,7 @@
     --text: #1a1a2e;
     --text-dim: #5f5f78;
     --accent: #b58300;
+    --accent-fill: #f2b600;
     --success: #16a34a;
     --warn: #d97706;
     --danger: #dc2626;
@@ -816,7 +818,7 @@
   .ld-name  { font-size: 0.95rem; font-weight: 700; color: var(--text); }
   .ld-count { font-size: 0.85rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .ld-bar { grid-column: 2 / -1; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-  .ld-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+  .ld-bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent-fill); }
   .ld-shots { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .ld-shot { margin: 0; text-align: left; }
   .ld-shot.wide { grid-column: 1 / -1; }
@@ -831,13 +833,19 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
     text-align: left;
   }
-  .auth-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; border-radius: 999px; background: var(--surface-2); }
+  /* The switch stays neutral so the one amber thing in the box is the button. */
+  .auth-tabs { display: flex; gap: 2px; padding: 3px; margin-bottom: 18px; border-radius: 12px; background: var(--surface-2); }
   .auth-tab {
-    flex: 1; padding: 9px 12px; border: none; border-radius: 999px;
+    flex: 1; padding: 8px 12px; border: none; border-radius: 9px;
     background: transparent; color: var(--text-dim);
-    font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer;
   }
-  .auth-tab.active { background: var(--accent); color: #1a1a2e; }
+  .auth-tab.active { background: var(--bg-2); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+  .auth-wrap .field input { background: var(--bg-2); border-radius: 12px; padding: 12px 14px; }
+  .auth-wrap .btn-primary { margin-top: 6px; padding: 13px 16px; font-size: 0.95rem; }
+  .auth-wrap .link-btn { display: block; margin: 14px auto 0; text-decoration: none; color: var(--text-dim); }
+  .auth-wrap .link-btn:hover { color: var(--text); }
+  .auth-msg:empty { display: none; }
   @media (max-width: 600px) {
     .landing { margin-top: 2vh; }
     .ld-head { font-size: 2.2rem; }
@@ -857,7 +865,7 @@
   .field input:focus, .inline-form input:focus { outline: none; border-color: var(--accent); }
   .btn-primary {
     width: 100%;
-    background: var(--accent);
+    background: var(--accent-fill);
     color: #1a1a2e;
     border: none;
     border-radius: 999px;
