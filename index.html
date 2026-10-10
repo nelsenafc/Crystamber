@@ -3527,6 +3527,12 @@
   let CARDS = [];
   let owned = {}, conditions = {}, prices = {}, cardEditions = {}, wants = {}, forTrade = {};
 
+  // Trades and Group are switched off while Crystamber has one collector - with
+  // nobody to trade with they were empty rooms. The code stays; flip this to
+  // bring both tabs back.
+  const SOCIAL = false;
+  document.getElementById("viewTabs").hidden = !SOCIAL;
+
   let uid = null;          // signed-in user; every collection key in localStorage is namespaced by it
   let me = null;           // { id, username, binder_public, my_sets }
   let mySets = null;       // set ids this person collects; null = not chosen, show everything
@@ -5049,7 +5055,7 @@
     if (pending) {
       localStorage.removeItem("pendingJoin");
       history.replaceState(null, "", location.pathname);
-      if (await joinGroup(pending)) { switchView("group"); return; }
+      if (await joinGroup(pending) && SOCIAL) { switchView("group"); return; }
     }
     await loadGroups();
   }
