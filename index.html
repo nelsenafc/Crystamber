@@ -131,7 +131,16 @@
     text-align: left;
     background: transparent;
   }
-  .set-switch .st-name  { font-size: 0.86rem; font-weight: 600; color: var(--text); }
+  .set-switch .st-name  { display: flex; align-items: center; gap: 7px; font-size: 0.86rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+  /* Each set's real symbol, used as a mask so it takes the text colour in
+     either theme [several symbols are black-only and vanish on dark]. */
+  .set-switch .st-sym {
+    flex: 0 0 auto; width: 18px; height: 18px;
+    background: var(--text-dim);
+    -webkit-mask: var(--sym) center / contain no-repeat;
+            mask: var(--sym) center / contain no-repeat;
+  }
+  .set-switch .set-tab.active .st-sym { background: var(--accent); }
   .set-switch .st-count { font-size: 0.78rem; color: var(--text); font-variant-numeric: tabular-nums; }
   .set-switch .st-bar   { margin-top: 4px; height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; }
   .set-switch .st-bar i { display: block; width: 0; height: 100%; border-radius: 999px; background: var(--accent); }
@@ -955,15 +964,17 @@
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
-    padding: 10px 14px 10px 38px;
-    background: var(--bg) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239090a8' stroke-width='2.5' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>") no-repeat 12px center / 16px;
+    padding: 13px 18px 13px 44px;
+    background: var(--surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239090a8' stroke-width='2.5' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='m20 20-3.5-3.5'/></svg>") no-repeat 17px center / 16px;
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 999px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.08);
     font-size: 16px;            /* under 16px and iOS zooms the page on focus */
     font-family: inherit;
   }
-  .search input:focus { outline: none; border-color: var(--accent); }
+  .search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,203,5,0.18); }
+  .search-results { border-radius: 16px; }
   .search-results {
     position: absolute;
     left: 0;
@@ -3719,7 +3730,7 @@
       .map(e => `<button type="button" class="era-tab${e.id === era.id ? " active" : ""}" data-era="${e.id}">${e.name}<span class="era-count"></span></button>`)
       .join("") + editBtn("era-tab era-edit");
     document.getElementById("setTabs").innerHTML = era.sets.filter(id => vis.includes(id)).map(id => SETS[id]).map(s =>
-      `<button class="set-tab" data-set="${s.id}"><span class="st-name">${s.name}</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>`
+      `<button class="set-tab" data-set="${s.id}"><span class="st-name"><i class="st-sym" style="--sym:url(img/symbols/${s.id}.${s.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>${s.name}</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>`
     ).join("") + (oneEra ? editBtn("set-edit") : "");
   }
 
