@@ -1107,6 +1107,85 @@
   .set-switch .set-edit svg { width: 18px; height: 18px; }
   .set-switch .set-edit:hover { border-color: var(--accent); }
 
+  /* Card detail: a full page on a phone, a centred panel on desktop. Sits under
+     the remove confirm [z 1000] so Remove can still ask first. */
+  #cardDetail {
+    position: fixed; inset: 0; z-index: 950;
+    display: flex; justify-content: center; align-items: center;
+    background: rgba(8, 8, 20, 0.6);
+  }
+  .cd-page {
+    position: relative;
+    display: flex; flex-direction: column;
+    width: 100%; max-width: 440px; height: 100%; max-height: 860px;
+    background: var(--bg-2);
+    overflow: hidden;
+  }
+  @media (min-width: 601px) { .cd-page { height: calc(100% - 48px); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); } }
+  .cd-hero { position: relative; flex: 0 0 auto; margin: 12px 12px 0; padding: 22px 0; border-radius: 18px; background: var(--surface-2); }
+  .cd-art { display: flex; justify-content: center; }
+  .cd-art img { display: block; width: auto; height: min(42vh, 360px); aspect-ratio: 63 / 88; border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,0.35); }
+  .cd-art .placeholder { width: auto; height: min(42vh, 360px); aspect-ratio: 63 / 88; border-radius: 10px; }
+  .cd-round {
+    position: absolute; top: 12px; left: 12px; z-index: 1;
+    display: grid; place-items: center; width: 38px; height: 38px;
+    border: none; border-radius: 50%;
+    background: var(--bg-2); color: var(--text);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    cursor: pointer;
+  }
+  .cd-round svg { width: 18px; height: 18px; }
+  .cd-body { flex: 1 1 auto; overflow-y: auto; padding: 20px 20px 24px; }
+  .cd-name { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+  .cd-sub  { margin-top: 4px; font-size: 0.95rem; color: var(--text-dim); }
+  .cd-rule { height: 1px; margin: 18px 0; background: var(--border); }
+  .cd-blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 10px; }
+  .cd-block {
+    position: relative;
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 12px 12px 13px;
+    border-radius: 14px;
+    background: var(--surface-2);
+    cursor: pointer;
+  }
+  .cd-block > svg { width: 20px; height: 20px; margin-bottom: 6px; color: var(--text); }
+  .cd-label { font-size: 0.75rem; color: var(--text-dim); }
+  .cd-value { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+  .cd-value.unset { color: var(--accent); font-weight: 600; }
+  /* The real control covers the block, invisible, so a tap opens the phone's own picker. */
+  .cd-block select, .cd-block input {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    opacity: 0; border: none; font-size: 16px; cursor: pointer;
+  }
+  .cd-price { display: flex; flex-direction: column; gap: 4px; cursor: text; }
+  .cd-price-row { display: flex; align-items: baseline; gap: 6px; }
+  .cd-cur { font-size: 1.35rem; font-weight: 700; color: var(--text); }
+  .cd-price input {
+    flex: 1; min-width: 0; padding: 0;
+    border: none; background: transparent; color: var(--text);
+    font: inherit; font-size: 1.35rem; font-weight: 700;
+    -moz-appearance: textfield;
+  }
+  .cd-price input::placeholder { color: var(--accent); font-weight: 600; font-size: 1rem; }
+  .cd-price input:focus { outline: none; }
+  .cd-price input::-webkit-outer-spin-button, .cd-price input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .cd-note { font-size: 0.78rem; color: var(--text-dim); }
+  .cd-foot {
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--bg-2);
+  }
+  .cd-since { font-size: 0.85rem; color: var(--text-dim); }
+  .cd-since b { color: var(--text); }
+  .cd-remove {
+    padding: 10px 18px; border-radius: 999px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--danger); font: inherit; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer;
+  }
+
   /* My sets picker: a sheet from the bottom on a phone, a dialog on desktop. */
   .sheet-backdrop {
     position: fixed;
@@ -1236,6 +1315,51 @@
 <div id="updateToast" hidden>
   <span>A new version of Crystamber is ready.</span>
   <button type="button" id="updateReload">Refresh</button>
+</div>
+<div id="cardDetail" role="dialog" aria-modal="true" aria-labelledby="cdName" hidden>
+  <div class="cd-page">
+    <div class="cd-hero">
+      <button type="button" class="cd-round" id="cdClose" aria-label="Back to the collection">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="cd-art" id="cdArt"></div>
+    </div>
+    <div class="cd-body">
+      <h2 class="cd-name" id="cdName"></h2>
+      <div class="cd-sub" id="cdSub"></div>
+      <div class="cd-rule"></div>
+      <div class="cd-blocks">
+        <label class="cd-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/></svg>
+          <span class="cd-label">Condition</span>
+          <span class="cd-value" id="cdCondVal"></span>
+          <select id="cdCond" aria-label="Condition"></select>
+        </label>
+        <label class="cd-block" id="cdEdBlock">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>
+          <span class="cd-label">Edition</span>
+          <span class="cd-value" id="cdEdVal"></span>
+          <select id="cdEd" aria-label="Edition"></select>
+        </label>
+        <label class="cd-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span class="cd-label">Added</span>
+          <span class="cd-value" id="cdDateVal"></span>
+          <input type="date" id="cdDate" aria-label="Date added">
+        </label>
+      </div>
+      <div class="cd-rule"></div>
+      <label class="cd-price">
+        <span class="cd-label">Price paid</span>
+        <span class="cd-price-row"><span class="cd-cur">Rp</span><input type="text" id="cdPrice" inputmode="numeric" autocomplete="off" placeholder="Add a price"></span>
+        <span class="cd-note">Private - only you ever see this.</span>
+      </label>
+    </div>
+    <div class="cd-foot">
+      <span class="cd-since" id="cdSince"></span>
+      <button type="button" class="cd-remove" id="cdRemove">Remove</button>
+    </div>
+  </div>
 </div>
 <div class="sheet-backdrop" id="confirmRemove" hidden>
   <div class="sheet confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmBody">
@@ -4219,6 +4343,117 @@
     if (activeFilter === "fortrade") render();
   }
 
+  // ─── CARD DETAIL ──────────────────────────────────────────────────────────────
+  // Tapping an owned card opens its page: the art large, and condition, edition,
+  // date and price as tappable blocks. Remove lives here now, behind the same
+  // confirm. Edits go through the same setters as the grid chips, so the grid
+  // behind stays in step.
+
+  const cd = document.getElementById("cardDetail");
+  let cdNum = null;
+
+  function fillSelect(sel, groups, current) {
+    sel.innerHTML = `<option value="">Not set</option>` + groups.map(([label, opts]) =>
+      (label ? `<optgroup label="${label}">` : "") +
+      opts.map(([v, t]) => `<option value="${escapeAttr(v)}">${escapeAttr(t)}</option>`).join("") +
+      (label ? `</optgroup>` : "")).join("");
+    sel.value = current || "";
+  }
+
+  function paintCardDetail() {
+    const card = CARDS.find(c => c.num === cdNum);
+    if (!card || !isOwned(cdNum)) { closeCardDetail(); return; }
+    const set = SETS[activeSetId];
+    const cond = conditions[cdNum] || "";
+    const ed = cardEditions[cdNum] || "";
+    const price = prices[cdNum];
+
+    document.getElementById("cdName").textContent = card.name;
+    document.getElementById("cdSub").textContent =
+      [set.name, "No. " + cardLabel(card), card.rarity || card.cardType].filter(Boolean).join(" · ");
+
+    const condVal = document.getElementById("cdCondVal");
+    condVal.textContent = cond || "Add";
+    condVal.classList.toggle("unset", !cond);
+    fillSelect(document.getElementById("cdCond"),
+      [["Raw / Ungraded", RAW_CONDS.map(c => [c, c])], ["Graded", GRADED_CONDS.map(c => [c, c])]], cond);
+
+    document.getElementById("cdEdBlock").hidden = !set.editions.length;
+    const edVal = document.getElementById("cdEdVal");
+    edVal.textContent = ed ? editionLabel(activeSetId, ed) : "Add";
+    edVal.classList.toggle("unset", !ed);
+    fillSelect(document.getElementById("cdEd"), [[null, set.editions.map(e => [e.key, e.label])]], ed);
+
+    document.getElementById("cdDateVal").textContent = fmtDate(owned[cdNum]);
+    const dateIn = document.getElementById("cdDate");
+    dateIn.value = owned[cdNum] || "";
+    dateIn.max = todayISO();
+
+    const priceIn = document.getElementById("cdPrice");
+    // Shown as 1.500.000; typed as plain digits.
+    if (document.activeElement !== priceIn) priceIn.value = typeof price === "number" ? price.toLocaleString("id-ID") : "";
+
+    document.getElementById("cdSince").innerHTML =
+      `In your collection since <b>${escapeAttr(fmtDate(owned[cdNum]))}</b>`;
+  }
+
+  function openCardDetail(num) {
+    cdNum = num;
+    const card = CARDS.find(c => c.num === num);
+    document.getElementById("cdArt").innerHTML = cardPicture(activeSetId, num,
+      `alt="${escapeAttr(card.name)}" decoding="async"
+       onerror="this.outerHTML='<div class=&quot;placeholder&quot;><div class=&quot;ph-num&quot;>#${cardLabel(card)}</div><div class=&quot;ph-label&quot;>no image</div></div>'"`);
+    paintCardDetail();
+    cd.hidden = false;
+    document.body.style.overflow = "hidden";
+    // The phone's back gesture closes the page instead of leaving the app.
+    // Already on our own entry [a quick close-then-reopen]: reuse it, don't stack another.
+    if (history.state && history.state.cardDetail) history.replaceState({ cardDetail: true }, "");
+    else history.pushState({ cardDetail: true }, "");
+    document.getElementById("cdClose").focus();
+  }
+
+  function closeCardDetail(fromHistory) {
+    if (cd.hidden) return;
+    const num = cdNum;
+    cd.hidden = true;
+    cdNum = null;
+    document.body.style.overflow = "";
+    if (!fromHistory && history.state && history.state.cardDetail) history.back();
+    const tile = grid.querySelector(`[data-num="${num}"]`);
+    if (tile) tile.focus({ preventScroll: true });
+  }
+
+  window.addEventListener("popstate", () => closeCardDetail(true));
+  document.getElementById("cdClose").onclick = () => closeCardDetail();
+  cd.addEventListener("click", (e) => { if (e.target === cd) closeCardDetail(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !cd.hidden && document.getElementById("confirmRemove").hidden) closeCardDetail();
+  });
+
+  document.getElementById("cdCond").addEventListener("change", (e) => { setCondition(cdNum, e.target.value); paintCardDetail(); });
+  document.getElementById("cdEd").addEventListener("change", (e) => { setCardEdition(cdNum, e.target.value); paintCardDetail(); });
+  document.getElementById("cdDate").addEventListener("change", (e) => {
+    if (e.target.value) setDate(cdNum, e.target.value);
+    paintCardDetail();
+  });
+  const cdPrice = document.getElementById("cdPrice");
+  const commitPrice = () => {
+    if (cdNum == null) return;
+    const v = cdPrice.value.replace(/\D/g, "");
+    setPrice(cdNum, v === "" ? null : Number(v));
+    paintCardDetail();
+  };
+  cdPrice.addEventListener("focus", () => { cdPrice.value = cdPrice.value.replace(/\D/g, ""); });
+  cdPrice.addEventListener("change", commitPrice);
+  cdPrice.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); cdPrice.blur(); } });
+
+  document.getElementById("cdRemove").onclick = async () => {
+    const num = cdNum;
+    await toggle(num);
+    if (!isOwned(num)) closeCardDetail();
+  };
+
   // ─── SET SWITCHER ─────────────────────────────────────────────────────────────
 
   function switchSet(setId) {
@@ -4476,11 +4711,16 @@
       if (e.target.closest(".card-condition")) return;
       if (e.target.closest(".card-price")) return;
       if (e.target.closest(".card-flag")) return;
-      toggle(card.num);
+      if (isOwned(card.num)) openCardDetail(card.num);
+      else toggle(card.num);
     });
     el.addEventListener("keydown", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(card.num); }
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (isOwned(card.num)) openCardDetail(card.num);
+        else toggle(card.num);
+      }
     });
 
     // Date editor
