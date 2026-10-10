@@ -1049,8 +1049,23 @@
   /* <picture> only exists to offer AVIF; it must not change the layout. */
   .card-image-wrap picture, .mini picture { display: contents; }
 
-  /* ✎ Sets sits at the end of the era row. */
+  /* ✎ Sets sits at the end of the era row, or of the set row when there is
+     only one era and the era row hides. */
   .era-tab.era-edit { margin-left: auto; color: var(--accent); }
+  .set-switch .set-edit {
+    flex: 0 0 auto;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .set-switch .set-edit:hover { border-color: var(--accent); }
 
   /* My sets picker: a sheet from the bottom on a phone, a dialog on desktop. */
   .sheet-backdrop {
@@ -3479,7 +3494,8 @@
   }
 
   // Eras with at least one visible set, then the visible sets in the active era.
-  // Only rebuilt when either changes.
+  // With only one era there is nothing to switch to, so the era row hides and
+  // ✎ Sets moves to the end of the set row. Only rebuilt when either changes.
   let switcherKey = null;
   function renderSwitcher() {
     const vis = visibleSetIds();
@@ -3487,14 +3503,17 @@
     const key = vis.join() + "|" + era.id;
     if (key === switcherKey) return;
     switcherKey = key;
-    document.getElementById("eraTabs").innerHTML = ERAS
-      .filter(e => e.sets.some(id => vis.includes(id)))
+    const eras = ERAS.filter(e => e.sets.some(id => vis.includes(id)));
+    const oneEra = eras.length < 2;
+    const editBtn = (cls) => readOnly ? "" : `<button type="button" class="${cls}" id="editSets" title="Choose which sets show">✎ Sets</button>`;
+    const eraTabs = document.getElementById("eraTabs");
+    eraTabs.hidden = oneEra;
+    eraTabs.innerHTML = oneEra ? "" : eras
       .map(e => `<button type="button" class="era-tab${e.id === era.id ? " active" : ""}" data-era="${e.id}">${e.name}<span class="era-count"></span></button>`)
-      .join("")
-      + (readOnly ? "" : `<button type="button" class="era-tab era-edit" id="editSets" title="Choose which sets show">✎ Sets</button>`);
+      .join("") + editBtn("era-tab era-edit");
     document.getElementById("setTabs").innerHTML = era.sets.filter(id => vis.includes(id)).map(id => SETS[id]).map(s =>
       `<button class="set-tab" data-set="${s.id}"><span class="st-name">${s.name}</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>`
-    ).join("");
+    ).join("") + (oneEra ? editBtn("set-edit") : "");
   }
 
   let activeSetId = localStorage.getItem("activeSet") || "base";
@@ -4175,6 +4194,7 @@
   }
 
   document.getElementById("setTabs").addEventListener("click", (e) => {
+    if (e.target.closest("#editSets")) { openSetPicker(false); return; }
     const btn = e.target.closest(".set-tab");
     if (btn) switchSet(btn.dataset.set);
   });
