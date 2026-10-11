@@ -816,7 +816,8 @@
     .ld-head { font-size: 2.3rem; }
     .ld-actions { flex-direction: column; }
   }
-  .auth-sheet { max-width: 420px; padding: 14px 18px 22px; }
+  /* .sheet sets padding-bottom 0 later in the file, so this needs the extra class to win. */
+  .sheet.auth-sheet { max-width: 420px; padding: 14px 18px calc(24px + env(safe-area-inset-bottom)); }
   .auth-close {
     margin: -4px -4px 10px auto;
     display: grid; place-items: center; width: 34px; height: 34px;
