@@ -800,7 +800,8 @@
     display: flex; flex-direction: column; justify-content: center; align-items: center;
     text-align: center; padding: 24px 0;
   }
-  .ld-brand { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; color: var(--accent); }
+  .ld-brand { display: inline-flex; align-items: center; gap: 8px; font-size: 1.15rem; font-weight: 800; letter-spacing: -0.01em; color: var(--text); }
+  .ld-brand svg { width: 30px; height: 30px; }
   .ld-head { margin-top: 12px; font-size: 2.8rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--text); }
   .ld-sub { margin-top: 10px; font-size: 1.02rem; color: var(--text-dim); }
   .ld-hero { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; margin-top: 28px; border-radius: 22px; background: var(--surface-2); box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
@@ -1480,7 +1481,10 @@
 
   <div id="authScreen" hidden>
     <div class="landing">
-      <div class="ld-brand">Crystamber</div>
+      <div class="ld-brand">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#0f0f1e" stroke-width="3" stroke-linejoin="round"><polygon points="10,36 30,18 40,36" fill="#ffd166"/><polygon points="30,18 70,18 60,36 40,36" fill="#ffe9a8"/><polygon points="70,18 90,36 60,36" fill="#ffb703"/><polygon points="10,36 40,36 50,82" fill="#f48c06"/><polygon points="40,36 60,36 50,82" fill="#ffb703"/><polygon points="60,36 90,36 50,82" fill="#dc5f00"/></g></svg>
+        Crystamber
+      </div>
       <h1 class="ld-head">Finish the set.</h1>
       <p class="ld-sub">A calm tracker for vintage WotC collectors.</p>
       <img class="ld-hero" src="img/landing/flatlay.webp" alt="A binder, a loupe, card sleeves and a checklist laid out on linen" width="880" height="660" decoding="async">
