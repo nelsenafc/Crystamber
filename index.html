@@ -3822,6 +3822,9 @@
   // bring both tabs back.
   const SOCIAL = false;
   document.getElementById("viewTabs").hidden = !SOCIAL;
+  // Trading needs other people too: the ⇄ Trade chip and the For trade filter
+  // go with the tabs. Anything already marked for trade stays saved.
+  document.querySelector('.filter-btn[data-filter="fortrade"]').hidden = !SOCIAL;
 
   let uid = null;          // signed-in user; every collection key in localStorage is namespaced by it
   let me = null;           // { id, username, binder_public, my_sets }
@@ -4826,7 +4829,7 @@
         ${isOwn && activeSet.editions.length && (!readOnly || editionValue) ? `<span class="card-edition ${editionClass}" title="Click to set edition">${escapeAttr(editionDisplay)}</span>` : ""}
         ${isOwn && (!readOnly || condValue) ? `<span class="card-condition ${condClass(condValue)}" title="Click to set condition">${escapeAttr(condDisplay)}</span>` : ""}
         ${isOwn && !readOnly ? `<span class="card-price ${priceClass}" title="Private - only you ever see this">${escapeAttr(priceDisplay)}</span>` : ""}
-        ${isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}`;
+        ${SOCIAL && isOwn && (!readOnly || isTrade) ? `<span class="card-flag trade${isTrade ? " on" : ""}" title="Available to trade - your group sees this">${isTrade ? "⇄ For trade" : "⇄ Trade"}</span>` : ""}`;
 
     const detail = isOwn
       ? [condValue, editionValue ? editionLabel(activeSetId, editionValue) : ""].filter(Boolean).join(" · ")
