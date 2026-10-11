@@ -276,18 +276,23 @@
   .filter-btn:hover { color: var(--text); }
   .filter-btn.active { background: var(--surface-2); color: var(--text); }
   .toolbar-selects { display: flex; gap: 8px; }
+  /* Layout toggle and both selects share one height, radius and surface. */
   .toolbar-selects select {
-    background: var(--bg);
+    height: 38px;
+    -webkit-appearance: none; appearance: none;
+    background: var(--surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239090a8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>") no-repeat right 11px center / 14px;
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 10px;
-    font-size: 0.82rem;
+    border-radius: 10px;
+    padding: 0 32px 0 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
     font-family: inherit;
     cursor: pointer;
   }
-  .toolbar-selects select:hover,
-  .toolbar-selects select:focus { outline: none; border-color: var(--accent); }
+  .toolbar-selects select:hover { border-color: var(--text-dim); }
+  .toolbar-selects select:focus { outline: none; }
+  .toolbar-selects select:focus-visible { box-shadow: 0 0 0 3px rgba(255,203,5,0.25); }
 
   /* Card Grid */
   .grid {
@@ -994,8 +999,10 @@
     header { padding: 14px 14px 12px; }
     .set-switch { margin: 0 -14px 14px; padding: 0 14px 2px; }
     .hero-count .count { font-size: 1.6rem; }
+    /* Toggle plus two selects must fit 320px: the selects shrink, never overflow. */
     .toolbar-selects { width: 100%; }
-    .toolbar-selects select { flex: 1; }
+    .toolbar-selects select { flex: 1 1 0; min-width: 0; padding: 0 26px 0 10px; background-position: right 8px center; font-size: 0.82rem; text-overflow: ellipsis; }
+    .layout-toggle button { width: 32px; }
   }
 
   /* Search across every set. */
@@ -1060,20 +1067,22 @@
   /* Grid / quick list switch. */
   .layout-toggle {
     display: inline-flex;
+    flex: 0 0 auto;
+    height: 38px;
     gap: 2px;
     padding: 3px;
-    background: var(--bg);
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
   }
   .layout-toggle button {
-    padding: 3px 9px;
+    display: grid; place-items: center;
+    width: 36px;
+    padding: 0;
     background: transparent;
     border: none;
-    border-radius: 6px;
+    border-radius: 7px;
     color: var(--text-dim);
-    font-size: 0.95rem;
-    line-height: 1.4;
     cursor: pointer;
   }
   .energy-head {
@@ -1087,7 +1096,7 @@
   .energy-head span { margin-left: auto; font-size: 0.8rem; font-weight: 500; color: var(--text-dim); font-variant-numeric: tabular-nums; }
   .grid.list .energy-head { padding: 12px 14px 6px; margin: 0; border-bottom: 1px solid var(--border); }
   .layout-toggle button.active { background: var(--surface-2); color: var(--text); }
-  .layout-toggle button svg { display: block; width: 15px; height: 15px; margin: 2px 0; }
+  .layout-toggle button svg { display: block; width: 17px; height: 17px; }
 
   /* Gallery: calm white tiles - art, name, one line of detail. Everything else
      lives on the card's detail page, so the tile carries no chips. */
@@ -1583,19 +1592,19 @@
       </div>
       <div class="toolbar-selects">
         <div class="layout-toggle" id="layoutToggle" role="group" aria-label="Layout">
-          <button type="button" data-layout="grid" title="Card grid" aria-label="Card grid">▦</button>
-          <button type="button" data-layout="list" title="Quick list" aria-label="Quick list">☰</button>
-          <button type="button" data-layout="gallery" title="Gallery" aria-label="Gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="10" rx="2"/><rect x="13.5" y="3" width="7.5" height="10" rx="2"/><path d="M3 17h7.5M13.5 17h7.5M3 21h5M13.5 21h5" stroke-linecap="round"/></svg></button>
+          <button type="button" data-layout="grid" title="Card grid" aria-label="Card grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
+          <button type="button" data-layout="list" title="Quick list" aria-label="Quick list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16" stroke-linecap="round"/></svg></button>
+          <button type="button" data-layout="gallery" title="Gallery" aria-label="Gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="11" rx="2"/><path d="M4 18h16M4 21h10" stroke-linecap="round"/></svg></button>
         </div>
         <select id="rarityFilter" aria-label="Rarity">
-          <option value="all">All rarities</option>
+          <option value="all">Rarity</option>
         </select>
         <select id="sortSelect" aria-label="Sort">
           <option value="card">Card #</option>
-          <option value="dex" selected>Pokedex #</option>
-          <option value="energy">Energy type</option>
-          <option value="recent">Recently added</option>
-          <option value="oldest">Oldest first</option>
+          <option value="dex" selected>Pokédex</option>
+          <option value="energy">Energy</option>
+          <option value="recent">Newest</option>
+          <option value="oldest">Oldest</option>
         </select>
       </div>
     </div>
@@ -5147,7 +5156,7 @@
 
     // Only offer the rarities this set actually has.
     const present = RARITY_ORDER.filter(r => s.cards.some(c => c.rarity === r));
-    raritySelect.innerHTML = `<option value="all">All rarities</option>`
+    raritySelect.innerHTML = `<option value="all">Rarity</option>`
       + present.map(r => `<option value="${r}">${r}</option>`).join("");
     if (!present.includes(activeRarity)) activeRarity = "all";
     raritySelect.value = activeRarity;
