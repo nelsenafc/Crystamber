@@ -1,0 +1,274 @@
+<title>Crystamber Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one engineering diagram in lanes [client, hosting, delivery, sources, with data on the right], then short reference sections. */
+  :root {
+    --bg: #f6f7f9;
+    --panel: #eef0f4;
+    --node: #ffffff;
+    --fg: #161a22;
+    --muted: #5b6475;
+    --line: #8a93a3;
+    --rule: #dde1e8;
+    --c-app: #2563eb;
+    --c-host: #7c3aed;
+    --c-data: #15803d;
+    --c-ship: #c2410c;
+    --c-src: #be123c;
+    --amber: #d39200;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1218; --panel: #171b24; --node: #1c212c; --fg: #e8ebf1; --muted: #9aa3b4;
+      --line: #6b7486; --rule: #2a303c;
+      --c-app: #6b9bff; --c-host: #a78bfa; --c-data: #4ade80; --c-ship: #fb923c; --c-src: #fb7185; --amber: #ffcb05;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1218; --panel: #171b24; --node: #1c212c; --fg: #e8ebf1; --muted: #9aa3b4;
+    --line: #6b7486; --rule: #2a303c;
+    --c-app: #6b9bff; --c-host: #a78bfa; --c-data: #4ade80; --c-ship: #fb923c; --c-src: #fb7185; --amber: #ffcb05;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.55; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 64px; }
+  header h1 { margin: 0; font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; display: flex; align-items: center; gap: 12px; }
+  header h1 svg { width: 34px; height: 34px; flex: 0 0 auto; }
+  header p { margin: 6px 0 0; color: var(--muted); max-width: 70ch; }
+  .meta { margin-top: 10px; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+
+  .diagram { margin-top: 28px; overflow-x: auto; border: 1px solid var(--rule); border-radius: 14px; background: var(--bg); }
+  .diagram svg { display: block; width: 100%; min-width: 900px; height: auto; }
+
+  /* SVG styling through tokens so both themes read */
+  .lane { font: 600 11px var(--sans); letter-spacing: 0.14em; fill: var(--muted); }
+  .box { fill: var(--node); stroke-width: 1.6; }
+  .container { fill: var(--panel); stroke: var(--rule); stroke-width: 1.4; }
+  .ct { font: 600 11px var(--sans); letter-spacing: 0.12em; fill: var(--muted); }
+  .t1 { font: 600 14px var(--sans); fill: var(--fg); }
+  .t2 { font: 400 11.5px var(--sans); fill: var(--muted); }
+  .t3 { font: 400 11px var(--mono); fill: var(--muted); }
+  .app  { stroke: var(--c-app); }
+  .host { stroke: var(--c-host); }
+  .data { stroke: var(--c-data); }
+  .ship { stroke: var(--c-ship); }
+  .src  { stroke: var(--c-src); }
+  .wire { fill: none; stroke: var(--line); stroke-width: 1.6; }
+  .wire.dash { stroke-dasharray: 5 4; }
+  .wire.data { stroke: var(--c-data); }
+  .tag { fill: var(--node); stroke-width: 1.2; }
+  .tag-t { font: 500 11px var(--sans); fill: var(--fg); }
+  .ah { fill: var(--line); }
+  .ah.data { fill: var(--c-data); }
+  .lg { font: 400 12px var(--sans); fill: var(--muted); }
+
+  section { margin-top: 44px; }
+  h2 { margin: 0 0 12px; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
+  .cols > div { min-width: 0; }
+  ol, ul { margin: 0; padding-left: 1.2em; max-width: 65ch; }
+  li { margin: 0 0 8px; }
+  li::marker { color: var(--muted); }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.92rem; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+  th { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  .pill { display: inline-block; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+  .ok { color: var(--c-data); }
+  .watch { color: var(--c-ship); }
+  .risk { color: var(--c-src); }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.82rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>
+      <svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#0f0f1e" stroke-width="3" stroke-linejoin="round"><polygon points="10,36 30,18 40,36" fill="#ffd166"/><polygon points="30,18 70,18 60,36 40,36" fill="#ffe9a8"/><polygon points="70,18 90,36 60,36" fill="#ffb703"/><polygon points="10,36 40,36 50,82" fill="#f48c06"/><polygon points="40,36 60,36 50,82" fill="#ffb703"/><polygon points="60,36 90,36 50,82" fill="#dc5f00"/></g></svg>
+      Crystamber Architecture
+    </h1>
+    <p>How a tap on a card turns into a saved collection. There is no server of our own: a static web app on Vercel, data and sign-in on Supabase, and GitHub for shipping.</p>
+    <div class="meta">crystamber.vercel.app · repo nelsenafc/Crystamber · as of 12 Oct 2026</div>
+  </header>
+
+  <div class="diagram" role="img" aria-label="Architecture diagram: the web app on your phone loads from Vercel, saves to Supabase, is deployed from GitHub, and a GitHub Action keeps Supabase awake.">
+    <svg viewBox="0 0 1130 690" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah data" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+
+      <!-- lane labels -->
+      <text class="lane" x="24" y="118">CLIENT</text>
+      <text class="lane" x="24" y="297">HOSTING</text>
+      <text class="lane" x="24" y="431">DELIVERY</text>
+      <text class="lane" x="24" y="574">SOURCES</text>
+      <text class="lane" x="1020" y="26" text-anchor="middle">DATA</text>
+
+      <!-- You -->
+      <rect class="box app" x="70" y="88" width="150" height="46" rx="23"/>
+      <text class="t1" x="145" y="110" text-anchor="middle">You</text>
+      <text class="t2" x="145" y="125" text-anchor="middle">phone or browser</text>
+      <path class="wire" d="M220,111 H298" marker-end="url(#a)"/>
+
+      <!-- Web app container -->
+      <rect class="container" x="300" y="40" width="470" height="150" rx="14"/>
+      <text class="ct" x="535" y="62" text-anchor="middle">CRYSTAMBER WEB APP · INSTALLABLE</text>
+      <rect class="box app" x="316" y="78" width="140" height="96" rx="10"/>
+      <text class="t1" x="386" y="104" text-anchor="middle">index.html</text>
+      <text class="t2" x="386" y="122" text-anchor="middle">One file, plain JS</text>
+      <text class="t3" x="386" y="142" text-anchor="middle">18 sets · 1,789 cards</text>
+      <text class="t3" x="386" y="157" text-anchor="middle">baked in</text>
+      <rect class="box app" x="465" y="78" width="140" height="96" rx="10"/>
+      <text class="t1" x="535" y="104" text-anchor="middle">Service worker</text>
+      <text class="t2" x="535" y="122" text-anchor="middle">Works offline</text>
+      <text class="t3" x="535" y="142" text-anchor="middle">page + viewed images</text>
+      <text class="t3" x="535" y="157" text-anchor="middle">sw.js</text>
+      <rect class="box app" x="614" y="78" width="140" height="96" rx="10"/>
+      <text class="t1" x="684" y="104" text-anchor="middle">localStorage</text>
+      <text class="t2" x="684" y="122" text-anchor="middle">Cards on this device</text>
+      <text class="t3" x="684" y="142" text-anchor="middle">saves instantly</text>
+      <text class="t3" x="684" y="157" text-anchor="middle">per signed-in user</text>
+
+      <!-- Vercel -->
+      <path class="wire" d="M535,190 V248" marker-end="url(#a)"/>
+      <rect class="tag host" x="472" y="207" width="126" height="22" rx="11"/>
+      <text class="tag-t" x="535" y="222" text-anchor="middle">Load page + images</text>
+      <rect class="box host" x="300" y="250" width="470" height="90" rx="12"/>
+      <text class="t1" x="535" y="276" text-anchor="middle">Vercel · static hosting</text>
+      <text class="t2" x="535" y="296" text-anchor="middle">Page, 1,789 card images [WebP + AVIF], set symbols, supabase-js 2.116.0</text>
+      <text class="t3" x="535" y="318" text-anchor="middle">images cached 1 year · page re-checked every visit</text>
+
+      <!-- Supabase -->
+      <path class="box data" d="M930,56 a90,16 0 0 1 180,0 V320 a90,16 0 0 1 -180,0 Z"/>
+      <path class="wire data" d="M930,56 a90,16 0 0 0 180,0"/>
+      <text class="t1" x="1020" y="98" text-anchor="middle">Supabase</text>
+      <text class="t2" x="1020" y="115" text-anchor="middle">Mumbai · free tier</text>
+      <text class="t3" x="946" y="146">Auth · email + password</text>
+      <text class="t3" x="946" y="170">profiles</text>
+      <text class="t3" x="946" y="190">user_sets · 1 row per set</text>
+      <text class="t3" x="946" y="210">groups, members [off]</text>
+      <text class="t3" x="946" y="230">keepalive</text>
+      <text class="t3" x="946" y="258">RPC get_binder</text>
+      <text class="t3" x="946" y="276">RPC join / create_group</text>
+      <text class="t3" x="946" y="294">RPC keepalive_ping</text>
+
+      <path class="wire data" d="M772,92 H928" marker-start="url(#ad)" marker-end="url(#ad)"/>
+      <rect class="tag data" x="796" y="81" width="108" height="22" rx="11"/>
+      <text class="tag-t" x="850" y="96" text-anchor="middle">Sign in</text>
+      <path class="wire data" d="M772,150 H928" marker-start="url(#ad)" marker-end="url(#ad)"/>
+      <rect class="tag data" x="786" y="139" width="128" height="22" rx="11"/>
+      <text class="tag-t" x="850" y="154" text-anchor="middle">Save / load sets</text>
+
+      <!-- Delivery -->
+      <rect class="box ship" x="300" y="392" width="225" height="74" rx="12"/>
+      <text class="t1" x="412" y="418" text-anchor="middle">GitHub</text>
+      <text class="t2" x="412" y="436" text-anchor="middle">nelsenafc/Crystamber</text>
+      <text class="t3" x="412" y="454" text-anchor="middle">multi-user → main</text>
+      <path class="wire" d="M412,392 V342" marker-end="url(#a)"/>
+      <rect class="tag ship" x="364" y="356" width="96" height="22" rx="11"/>
+      <text class="tag-t" x="412" y="371" text-anchor="middle">Push deploys</text>
+
+      <rect class="box ship" x="545" y="392" width="225" height="74" rx="12"/>
+      <text class="t1" x="657" y="418" text-anchor="middle">GitHub Actions</text>
+      <text class="t2" x="657" y="436" text-anchor="middle">Keepalive, once a day</text>
+      <text class="t3" x="657" y="454" text-anchor="middle">stops the free-tier pause</text>
+      <path class="wire data" d="M770,429 H1020 V338" marker-end="url(#ad)"/>
+      <rect class="tag data" x="840" y="418" width="122" height="22" rx="11"/>
+      <text class="tag-t" x="901" y="433" text-anchor="middle">keepalive_ping()</text>
+
+      <!-- Sources -->
+      <rect class="box src" x="300" y="540" width="150" height="66" rx="12"/>
+      <text class="t1" x="375" y="566" text-anchor="middle">pokemon-tcg-data</text>
+      <text class="t2" x="375" y="585" text-anchor="middle">Card lists, energy</text>
+      <rect class="box src" x="460" y="540" width="150" height="66" rx="12"/>
+      <text class="t1" x="535" y="566" text-anchor="middle">pokemontcg.io</text>
+      <text class="t2" x="535" y="585" text-anchor="middle">Card art, set symbols</text>
+      <rect class="box src" x="620" y="540" width="150" height="66" rx="12"/>
+      <text class="t1" x="695" y="566" text-anchor="middle">Higgsfield</text>
+      <text class="t2" x="695" y="585" text-anchor="middle">Homepage images</text>
+      <path class="wire dash" d="M375,540 V508 M535,540 V508 M695,540 V508 M375,508 H695 M412,508 V468" marker-end="url(#a)"/>
+      <rect class="tag src" x="465" y="497" width="200" height="22" rx="11"/>
+      <text class="tag-t" x="565" y="512" text-anchor="middle">Imported once, committed</text>
+
+      <!-- legend -->
+      <g transform="translate(300,650)">
+        <circle cx="0" cy="0" r="5" fill="var(--c-app)"/><text class="lg" x="12" y="4">App</text>
+        <circle cx="70" cy="0" r="5" fill="var(--c-host)"/><text class="lg" x="82" y="4">Hosting</text>
+        <circle cx="160" cy="0" r="5" fill="var(--c-data)"/><text class="lg" x="172" y="4">Data</text>
+        <circle cx="230" cy="0" r="5" fill="var(--c-ship)"/><text class="lg" x="242" y="4">Delivery</text>
+        <circle cx="320" cy="0" r="5" fill="var(--c-src)"/><text class="lg" x="332" y="4">Sources</text>
+        <path class="wire dash" d="M410,0 H440"/><text class="lg" x="448" y="4">build time only</text>
+      </g>
+    </svg>
+  </div>
+
+  <section>
+    <div class="cols">
+      <div>
+        <h2>How a tap gets saved</h2>
+        <ol>
+          <li>You tap a card. It is written to <code>localStorage</code> straight away and the screen updates, online or not.</li>
+          <li>That set is queued. A moment later the app upserts one row in <code>user_sets</code> for that set only, so a bad write can never touch your other sets.</li>
+          <li>If you are offline or the write fails, the set stays queued and retries, backing off up to 30 seconds.</li>
+          <li>On opening, the app reads your rows before it is allowed to push anything. Each row carries a <code>rev</code> number; if two devices both changed a set, the two sides are merged rather than one erasing the other.</li>
+        </ol>
+      </div>
+      <div>
+        <h2>How a change ships</h2>
+        <ol>
+          <li>Edit on branch <code>multi-user</code>, syntax-check the page, try it on a local copy.</li>
+          <li>Push. Vercel builds it and reports the commit status.</li>
+          <li>Fast-forward <code>main</code>. Vercel puts it live on crystamber.vercel.app.</li>
+          <li>Open phones see a "new version" prompt from the service worker and refresh in one tap.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where things live</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Piece</th><th>Where</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>The app</td><td><code>index.html</code>, <code>sw.js</code>, <code>manifest.webmanifest</code></td><td>One page, no framework, no build step.</td></tr>
+          <tr><td>Card data</td><td>Inside <code>index.html</code></td><td>Names, rarities, Pokédex and energy type for all 18 English WotC sets.</td></tr>
+          <tr><td>Images</td><td><code>img/</code> on Vercel</td><td>Card art as WebP with AVIF copies, set symbols as single-colour masks, homepage photos.</td></tr>
+          <tr><td>Your collection</td><td>Supabase <code>user_sets</code> + this device</td><td>Row-level security: each person can only read and write their own rows.</td></tr>
+          <tr><td>Schema</td><td><code>supabase/migrations/</code></td><td>Three migrations: multi-user [14 Sep], my sets [15 Sep], keepalive write [11 Oct].</td></tr>
+          <tr><td>Keepalive</td><td><code>.github/workflows/keepalive.yml</code></td><td>Daily write so the free project is never idle for a week.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Switched off, not deleted</h2>
+    <p style="max-width:65ch;margin:0">Trades, Group and the trade flag on cards sit behind <code>const SOCIAL = false</code> in <code>index.html</code>. The tables and code are still there; flipping the flag brings all three back if other collectors join.</p>
+  </section>
+
+  <section>
+    <h2>Known limits</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Limit</th><th>Status</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr><td>Free-tier pause</td><td><span class="pill ok">Handled</span></td><td>Supabase pauses idle free projects. It happened twice; a daily write ping replaced the old read ping on 11 Oct.</td></tr>
+          <tr><td>Email confirmation off</td><td><span class="pill watch">Watch</span></td><td>Sign-ups go straight in. Supabase's built-in mailer only reaches its own team, so password resets need a real email service and a domain before strangers join.</td></tr>
+          <tr><td>Card art and symbols</td><td><span class="pill risk">Before charging</span></td><td>They belong to Nintendo and The Pokémon Company. Fine for a free fan tool; needs a plan before any paid version.</td></tr>
+          <tr><td>No automated tests</td><td><span class="pill watch">Watch</span></td><td>Every release is syntax-checked and tried on a local copy first. The service worker keeps whatever page it last fetched, so a broken release would stick on phones until the next one.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Nelsen Ships · Crystamber</footer>
+</div>
