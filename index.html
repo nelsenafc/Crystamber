@@ -1301,18 +1301,27 @@
     margin-bottom: 14px; padding: 16px 18px;
     border: 1px solid var(--border); border-radius: 16px; background: var(--bg-2);
   }
-  .vp-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
-  .vp-total { margin-top: 4px; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
-  .vp-lines { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; font-size: 0.86rem; color: var(--text-dim); }
-  .vp-lines b { font-variant-numeric: tabular-nums; }
-  .vp-up { color: var(--success); }
-  .vp-down { color: var(--danger); }
-  .vp-list { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
-  .vp-list h3 { margin: 0 0 6px; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
-  .vp-row { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; font-size: 0.88rem; color: var(--text); }
-  .vp-row .vp-set { color: var(--text-dim); font-size: 0.78rem; }
-  .vp-row .vp-amt { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .vp-note { margin-top: 10px; font-size: 0.74rem; color: var(--text-dim); }
+  .vp-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .vp-total { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; margin-right: auto; }
+  .vp-pill { font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .vp-pill.up   { background: rgba(74,222,128,0.14); color: var(--success); }
+  .vp-pill.down { background: rgba(248,113,113,0.14); color: var(--danger); }
+  .vp-pill.flat { background: var(--surface-2); color: var(--text-dim); }
+  .vp-info { display: grid; place-items: center; width: 26px; height: 26px; border: none; border-radius: 50%; background: transparent; color: var(--text-dim); cursor: pointer; font: inherit; font-size: 0.9rem; }
+  .vp-info:hover { background: var(--surface-2); color: var(--text); }
+  .vp-tiles { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .vp-tile {
+    display: flex; align-items: center; gap: 10px; padding: 12px;
+    border: none; border-radius: 12px; background: var(--surface); color: var(--text);
+    box-shadow: inset 0 -3px 0 var(--border); cursor: pointer; font: inherit; text-align: left;
+  }
+  .vp-tile.up   { box-shadow: inset 0 -3px 0 var(--success); }
+  .vp-tile.down { box-shadow: inset 0 -3px 0 var(--danger); }
+  .vp-tile:hover { background: var(--surface-2); }
+  .vp-sym { flex: 0 0 auto; width: 26px; height: 26px; background: var(--text);
+    -webkit-mask: var(--sym) center / contain no-repeat; mask: var(--sym) center / contain no-repeat; }
+  .vp-amt { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .vp-note { margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
   .cd-foot {
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -5766,54 +5775,83 @@
     }, 8000);
   }
 
+  // Compact rupiah: "27,6 jt", "850 rb".
+  function fmtShort(n) {
+    const a = Math.abs(n);
+    if (a >= 1e6) return (n / 1e6).toFixed(1).replace(".", ",") + " jt";
+    if (a >= 1e3) return Math.round(n / 1e3) + " rb";
+    return String(Math.round(n));
+  }
+
+  // One total, one "vs paid" pill, a tile per set. Up or down per set is shown
+  // only by the tile's bottom line; the caveats sit behind the ⓘ.
   function renderValuePanel() {
     const panel = document.getElementById("valuePanel");
     if (!panel) return;
     if (!showValue || readOnly || !fxRate) { panel.hidden = true; return; }
-    let total = 0, priced = 0, ownedN = 0, paidSum = 0, paidValue = 0, paidN = 0, weekNow = 0, weekThen = 0;
-    const rows = [], movers = [];
+    let total = 0, priced = 0, ownedN = 0, paidSum = 0, paidValue = 0, weekNow = 0, weekThen = 0;
+    const sets = [];
     for (const id of Object.keys(SETS)) {
       const st = setState(id);
-      for (const num of Object.keys(st.owned)) {
+      const nums = Object.keys(st.owned);
+      if (!nums.length) continue;
+      const row = { id, value: 0, paid: 0, paidValue: 0 };
+      for (const num of nums) {
         const card = SETS[id].cards.find(c => String(c.num) === String(num));
         if (!card) continue;
         ownedN++;
         const v = cardValue(id, card, st.eds[num]);
         if (!v) continue;
         priced++;
-        total += v.idr;
-        rows.push({ id, card, idr: v.idr });
-        if (typeof st.paid[num] === "number") { paidSum += st.paid[num]; paidValue += v.idr; paidN++; }
+        total += v.idr; row.value += v.idr;
+        if (typeof st.paid[num] === "number") {
+          paidSum += st.paid[num]; paidValue += v.idr;
+          row.paid += st.paid[num]; row.paidValue += v.idr;
+        }
         if (weekMap) {
           const then = pickPrice(card, weekMap[`${id}|${num}`], st.eds[num]);
-          if (then && then.variant === v.variant) {
-            const thenIdr = Math.round(then.usd * fxRate);
-            weekNow += v.idr; weekThen += thenIdr;
-            movers.push({ id, card, delta: v.idr - thenIdr });
-          }
+          if (then && then.variant === v.variant) { weekNow += v.idr; weekThen += Math.round(then.usd * fxRate); }
         }
       }
+      sets.push(row);
     }
     if (!ownedN) { panel.hidden = true; return; }
-    const signed = (n) => (n >= 0 ? "+" : "−") + fmtIDR(Math.abs(n));
-    const cls = (n) => n >= 0 ? "vp-up" : "vp-down";
-    const pct = (a, b) => b ? ` (${a >= b ? "+" : "−"}${Math.abs(Math.round((a - b) / b * 100))}%)` : "";
-    const lines = [];
-    if (paidN) lines.push(`<span><b class="${cls(paidValue - paidSum)}">${signed(paidValue - paidSum)}${pct(paidValue, paidSum)}</b> vs what you paid, on the ${paidN} card${paidN === 1 ? "" : "s"} with a price logged</span>`);
-    lines.push(weekMap && weekThen
-      ? `<span><b class="${cls(weekNow - weekThen)}">${signed(weekNow - weekThen)}</b> since ${fmtDate(weekDay)}</span>`
-      : `<span>Weekly change shows once a week of prices has built up.</span>`);
-    const risers = movers.filter(m => m.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 3);
-    const list = risers.length
-      ? { title: "Biggest risers this week", items: risers.map(m => ({ ...m, amt: signed(m.delta) })) }
-      : { title: "Most valuable", items: rows.sort((a, b) => b.idr - a.idr).slice(0, 3).map(r => ({ ...r, amt: fmtIDR(r.idr) })) };
+    // Within 2% of what you paid counts as even.
+    const trend = (now, then) => !then ? "flat" : now > then * 1.02 ? "up" : now < then * 0.98 ? "down" : "flat";
+    const pctText = (now, then) => {
+      const p = Math.round((now - then) / then * 100);
+      return (p > 0 ? "+" : p < 0 ? "−" : "±") + Math.abs(p) + "%";
+    };
+    const pills = [];
+    if (paidSum) pills.push(`<span class="vp-pill ${trend(paidValue, paidSum)}" title="${fmtIDR(paidValue)} today against ${fmtIDR(paidSum)} paid">${pctText(paidValue, paidSum)} vs paid</span>`);
+    if (weekMap && weekThen) {
+      const d = weekNow - weekThen;
+      pills.push(`<span class="vp-pill ${trend(weekNow, weekThen)}">${d >= 0 ? "+" : "−"}${fmtShort(Math.abs(d))} this week</span>`);
+    }
+    const noteOpen = panel.querySelector(".vp-note") && !panel.querySelector(".vp-note").hidden;
     panel.innerHTML = `
-      <div class="vp-label">Collection value</div>
-      <div class="vp-total">${fmtIDR(total)}</div>
-      <div class="vp-lines">${lines.join("")}</div>
-      ${list.items.length ? `<div class="vp-list"><h3>${list.title}</h3>${list.items.map(m =>
-        `<div class="vp-row"><span>${escapeAttr(m.card.name)}</span><span class="vp-set">${escapeAttr(SETS[m.id].name)} · No. ${escapeAttr(cardLabel(m.card))}</span><span class="vp-amt">${m.amt}</span></div>`).join("")}</div>` : ""}
-      <div class="vp-note">${priced} of ${ownedN} cards priced · TCGplayer market prices, updated daily · graded cards count at their raw price</div>`;
+      <div class="vp-head">
+        <span class="vp-total">Rp ${fmtShort(total)}</span>
+        ${pills.join("")}
+        <button type="button" class="vp-info" aria-label="About these prices" aria-expanded="${noteOpen}">ⓘ</button>
+      </div>
+      <div class="vp-tiles">${sets.sort((a, b) => b.value - a.value).map(r => `
+        <button type="button" class="vp-tile ${trend(r.paidValue, r.paid)}" data-set="${r.id}"
+          title="${escapeAttr(SETS[r.id].name)}: ${fmtIDR(r.value)}${r.paid ? ` · paid ${fmtIDR(r.paid)} for the priced cards` : ""}">
+          <i class="vp-sym" style="--sym:url(img/symbols/${r.id}.${r.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>
+          <span class="vp-amt">${fmtShort(r.value)}</span>
+        </button>`).join("")}
+      </div>
+      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. A tile's line turns green or red when that set is worth more or less than you paid.</div>`;
+    panel.querySelector(".vp-info").onclick = () => {
+      const n = panel.querySelector(".vp-note");
+      n.hidden = !n.hidden;
+      panel.querySelector(".vp-info").setAttribute("aria-expanded", String(!n.hidden));
+    };
+    panel.querySelectorAll(".vp-tile").forEach(t => t.onclick = () => {
+      switchSet(t.dataset.set);
+      document.getElementById("collectionHeader").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     panel.hidden = false;
   }
 
