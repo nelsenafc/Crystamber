@@ -1301,11 +1301,10 @@
     margin-bottom: 14px; padding: 16px 18px;
     border: 1px solid var(--border); border-radius: 16px; background: var(--bg-2);
   }
-  .value-panel { padding: 12px 18px; }
-  .vp-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .vp-title { margin-right: auto; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .vp-label { font-size: 0.85rem; font-weight: 600; color: var(--text-dim); }
-  .vp-total { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+  .vp-head { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+  .vp-title { margin-right: auto; display: flex; flex-direction: column; gap: 2px; }
+  .vp-label { font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
+  .vp-total { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
   .vp-pill { font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .vp-pill.up   { background: rgba(74,222,128,0.14); color: var(--success); }
   .vp-pill.down { background: rgba(248,113,113,0.14); color: var(--danger); }
@@ -1327,9 +1326,7 @@
   .vp-amt em { font-style: normal; font-size: 0.72rem; color: var(--text-dim); }
   .vp-amt b { font-size: 0.98rem; font-weight: 700; }
   .vp-amt span { font-size: 0.86rem; color: var(--text-dim); }
-  .spend-stat .down { color: var(--danger); }
-  .spend-stat .up { color: var(--success); }
-  .vp-note { margin-top: 8px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
+  .vp-note { margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
   .cd-foot {
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -3907,9 +3904,6 @@
   let weekDay = null;
   let fxRate = null;          // IDR per USD
   let lastValueRefresh = 0;
-  let setValues = {};          // set id -> { value, paid, paidValue } for the set header
-  // Within 2% of what you paid counts as even.
-  const valueTrend = (now, then) => !then ? "" : now > then * 1.02 ? "up" : now < then * 0.98 ? "down" : "";
 
   let uid = null;          // signed-in user; every collection key in localStorage is namespaced by it
   let me = null;           // { id, username, binder_public, my_sets }
@@ -4815,14 +4809,8 @@
 
     const priceVals = Object.values(prices).filter(v => typeof v === "number" && !isNaN(v));
     const filled = priceVals.length;
-    // With market value on, the set's value and what you paid for it replace
-    // the plain Spent figure.
-    const sv = showValue && setValues[activeSetId];
-    if (sv && sv.value) {
-      const t = valueTrend(sv.paidValue, sv.paid);
-      spendStatEl.innerHTML = `Value <b class="${t}">Rp ${fmtShort(sv.value)}</b>${sv.paid ? ` · Paid <b>Rp ${fmtShort(sv.paid)}</b>` : ""}`;
-      spendStatEl.title = sv.paid ? `${fmtIDR(sv.paidValue)} today against ${fmtIDR(sv.paid)} paid, on the cards that have both a market price and a price you logged.` : "";
-    } else if (filled === 0 || showValue) {
+    // With market value on, each set's tile already shows what you paid.
+    if (filled === 0 || showValue) {
       spendStatEl.textContent = "";
     } else {
       const total = priceVals.reduce((a, b) => a + b, 0);
@@ -5801,9 +5789,8 @@
     return String(Math.round(n));
   }
 
-  // One slim line: the total, a "vs paid" pill, and the caveats behind the ⓘ.
-  // Each set's own value and paid figure go in that set's header instead, so
-  // nothing repeats the set tabs.
+  // One total, one "vs paid" pill, a tile per set. Up or down per set is shown
+  // only by the tile's bottom line; the caveats sit behind the ⓘ.
   function renderValuePanel() {
     const panel = document.getElementById("valuePanel");
     if (!panel) return;
@@ -5834,8 +5821,6 @@
       }
       sets.push(row);
     }
-    setValues = {};
-    for (const r of sets) setValues[r.id] = r;
     if (!ownedN) { panel.hidden = true; return; }
     // Within 2% of what you paid counts as even.
     const trend = (now, then) => !then ? "flat" : now > then * 1.02 ? "up" : now < then * 0.98 ? "down" : "flat";
@@ -5856,12 +5841,23 @@
         ${pills.join("")}
         <button type="button" class="vp-info" aria-label="About these prices" aria-expanded="${noteOpen}">ⓘ</button>
       </div>
-      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. Each set's own value and what you paid for it show under the set's title.</div>`;
+      <div class="vp-tiles">${sets.sort((a, b) => b.value - a.value).map(r => `
+        <button type="button" class="vp-tile ${trend(r.paidValue, r.paid)}" data-set="${r.id}"
+          title="${escapeAttr(SETS[r.id].name)}: ${fmtIDR(r.value)}${r.paid ? ` · paid ${fmtIDR(r.paid)} for the priced cards` : ""}">
+          <i class="vp-sym" style="--sym:url(img/symbols/${r.id}.${r.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>
+          <span class="vp-amt"><em>Value</em><b>${fmtShort(r.value)}</b>${r.paid ? `<em>Paid</em><span>${fmtShort(r.paid)}</span>` : ""}</span>
+        </button>`).join("")}
+      </div>
+      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. A tile's line turns green or red when that set is worth more or less than you paid.</div>`;
     panel.querySelector(".vp-info").onclick = () => {
       const n = panel.querySelector(".vp-note");
       n.hidden = !n.hidden;
       panel.querySelector(".vp-info").setAttribute("aria-expanded", String(!n.hidden));
     };
+    panel.querySelectorAll(".vp-tile").forEach(t => t.onclick = () => {
+      switchSet(t.dataset.set);
+      document.getElementById("collectionHeader").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     panel.hidden = false;
   }
 
