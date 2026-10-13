@@ -197,7 +197,7 @@
       <rect class="box src" x="960" y="490" width="150" height="70" rx="12"/>
       <text class="t1" x="1035" y="514" text-anchor="middle">Resend</text>
       <text class="t2" x="1035" y="532" text-anchor="middle">Reset + confirm emails</text>
-      <text class="t3" x="1035" y="549" text-anchor="middle">from crystamber.com</text>
+      <text class="t3" x="1035" y="549" text-anchor="middle">no-reply@crystamber.com</text>
 
       <!-- Sources -->
       <rect class="box src" x="300" y="540" width="150" height="66" rx="12"/>
@@ -260,7 +260,7 @@
           <tr><td>Your collection</td><td>Supabase <code>user_sets</code> + this device</td><td>Row-level security: each person can only read and write their own rows.</td></tr>
           <tr><td>Schema</td><td><code>supabase/migrations/</code></td><td>Three migrations: multi-user [14 Sep], my sets [15 Sep], keepalive write [11 Oct].</td></tr>
           <tr><td>Domain</td><td>crystamber.com on Vercel</td><td>Bought 13 Oct, renews yearly. www redirects permanently to crystamber.com; crystamber.vercel.app still works.</td></tr>
-          <tr><td>Account emails</td><td>Resend, sent from crystamber.com</td><td>Supabase Auth hands password-reset and sign-up emails to Resend over SMTP. Setting up as of 13 Oct.</td></tr>
+          <tr><td>Account emails</td><td>Resend, sent from crystamber.com</td><td>Supabase Auth hands password-reset and sign-up confirmation emails to Resend over SMTP [up to 30 an hour]. Signed with DKIM, SPF and DMARC; live since 13 Oct.</td></tr>
           <tr><td>Market price</td><td>Links on each card's page</td><td>PriceCharting opens the card's own page [set, edition, number]; eBay searches sold listings for the exact copy. Nothing is fetched or stored.</td></tr>
           <tr><td>Keepalive</td><td><code>.github/workflows/keepalive.yml</code></td><td>Daily write so the free project is never idle for a week.</td></tr>
         </tbody>
@@ -280,7 +280,7 @@
         <thead><tr><th>Limit</th><th>Status</th><th>What it means</th></tr></thead>
         <tbody>
           <tr><td>Free-tier pause</td><td><span class="pill ok">Handled</span></td><td>Supabase pauses idle free projects. It happened twice; a daily write ping replaced the old read ping on 11 Oct.</td></tr>
-          <tr><td>Email confirmation off</td><td><span class="pill watch">In progress</span></td><td>Sign-ups go straight in, and Supabase's built-in mailer only reaches its own team. The domain is in place; Resend is being connected so resets reach everyone, then confirmation goes back on.</td></tr>
+          <tr><td>Account emails</td><td><span class="pill ok">Handled</span></td><td>Sent through Resend from crystamber.com since 13 Oct, so resets reach anyone. Email confirmation is back on: a new account must confirm its address before signing in.</td></tr>
           <tr><td>Card art and symbols</td><td><span class="pill risk">Before charging</span></td><td>They belong to Nintendo and The Pokémon Company. Fine for a free fan tool; needs a plan before any paid version.</td></tr>
           <tr><td>No automated tests</td><td><span class="pill watch">Watch</span></td><td>Every release is syntax-checked and tried on a local copy first. The service worker keeps whatever page it last fetched, so a broken release would stick on phones until the next one.</td></tr>
         </tbody>
