@@ -1290,6 +1290,7 @@
   }
   .cd-link:hover { border-color: var(--accent); }
   .cd-link svg { width: 14px; height: 14px; color: var(--text-dim); }
+  .cd-search { font-size: 0.78rem; color: var(--text-dim); }
   .cd-foot {
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1482,6 +1483,7 @@
           <a class="cd-link" id="cdEbay" target="_blank" rel="noopener">eBay sold<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
         </div>
         <span class="cd-note" id="cdMarketQ"></span>
+        <a class="cd-search" id="cdPCSearch" target="_blank" rel="noopener">Wrong card on PriceCharting? Search instead</a>
       </div>
     </div>
     <div class="cd-foot">
@@ -4549,11 +4551,16 @@
     // stored; the sites do the pricing. Printed totals as on the card [4/102].
     const q = marketQuery(card, ed, cond);
     document.getElementById("cdMarketQ").textContent = "Searches for " + q;
-    // PriceCharting matches product names [set, name, number] and lists every
-    // grade on the product page, so it gets the plain query; eBay gets it all.
+    // PriceCharting: straight to the card's own page when its address can be
+    // built, a search when it can't [promos number inconsistently]. The search
+    // link stays underneath either way, for the odd card the pattern misses.
     const setName = activeSetId === "base" ? "Base Set" : SETS[activeSetId].name;
-    document.getElementById("cdPC").href = "https://www.pricecharting.com/search-products?type=prices&q=" +
+    const pcSearch = "https://www.pricecharting.com/search-products?type=prices&q=" +
       encodeURIComponent(["pokemon", activeSetId === "promos" ? "promo" : setName, card.name, cardLabel(card)].join(" "));
+    const pcPage = pricechartingPage(card, ed);
+    document.getElementById("cdPC").href = pcPage || pcSearch;
+    document.getElementById("cdPCSearch").href = pcSearch;
+    document.getElementById("cdPCSearch").hidden = !pcPage;
     document.getElementById("cdEbay").href =
       "https://www.ebay.com/sch/i.html?LH_Sold=1&LH_Complete=1&_nkw=" + encodeURIComponent(q);
 
@@ -4566,6 +4573,30 @@
     gymheroes: 132, gymchallenge: 132, neogenesis: 111, neodiscovery: 75, neorevelation: 64,
     neodestiny: 105, expedition: 165, aquapolis: 147, skyridge: 144, southernislands: 18,
   };
+  // PriceCharting's own addresses, checked against their pages 13 Oct 2026:
+  //   /game/pokemon-base-set/charizard-4             Unlimited
+  //   /game/pokemon-base-set/charizard-1st-edition-4 1st Edition
+  //   /game/pokemon-base-set/charizard-shadowless-4  Shadowless
+  //   /game/pokemon-aquapolis/ampharos-h1            H holos
+  //   /game/pokemon-aquapolis/ampharos-reverse-holo-1
+  //   /game/pokemon-base-set-2/farfetch'd-40         apostrophe kept, ♂/♀ dropped, "Mr. Mime" -> mr-mime
+  const PC_SETS = {
+    base: "pokemon-base-set", jungle: "pokemon-jungle", fossil: "pokemon-fossil", baseset2: "pokemon-base-set-2",
+    teamrocket: "pokemon-team-rocket", legendary: "pokemon-legendary-collection", gymheroes: "pokemon-gym-heroes",
+    gymchallenge: "pokemon-gym-challenge", neogenesis: "pokemon-neo-genesis", neodiscovery: "pokemon-neo-discovery",
+    neorevelation: "pokemon-neo-revelation", neodestiny: "pokemon-neo-destiny", expedition: "pokemon-expedition",
+    aquapolis: "pokemon-aquapolis", skyridge: "pokemon-skyridge", southernislands: "pokemon-southern-islands",
+  };
+  const PC_EDITION = { "1st": "1st-edition", shadowless: "shadowless", reverse: "reverse-holo" };
+  function pricechartingPage(card, ed) {
+    const set = PC_SETS[activeSetId];
+    if (!set) return null;
+    const name = card.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[♂♀]/g, "")
+      .toLowerCase().replace(/[^a-z0-9']+/g, "-").replace(/^-+|-+$/g, "");
+    const slug = [name, PC_EDITION[ed], cardLabel(card).toLowerCase()].filter(Boolean).join("-");
+    return `https://www.pricecharting.com/game/${set}/${encodeURIComponent(slug).replace(/'/g, "%27")}`;
+  }
+
   function marketQuery(card, ed, cond) {
     const set = SETS[activeSetId];
     const label = cardLabel(card);
