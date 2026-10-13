@@ -1291,6 +1291,28 @@
   .cd-link:hover { border-color: var(--accent); }
   .cd-link svg { width: 14px; height: 14px; color: var(--text-dim); }
   .cd-search { font-size: 0.78rem; color: var(--text-dim); }
+  .cd-mv { display: flex; flex-direction: column; gap: 2px; }
+  .cd-mv b { font-size: 1.35rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .cd-mv span { font-size: 0.8rem; color: var(--text-dim); }
+
+  /* Collection value: one calm panel above the set header. Only shown to
+     people who said yes to seeing prices. */
+  .value-panel {
+    margin-bottom: 14px; padding: 16px 18px;
+    border: 1px solid var(--border); border-radius: 16px; background: var(--bg-2);
+  }
+  .vp-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); }
+  .vp-total { margin-top: 4px; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
+  .vp-lines { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; font-size: 0.86rem; color: var(--text-dim); }
+  .vp-lines b { font-variant-numeric: tabular-nums; }
+  .vp-up { color: var(--success); }
+  .vp-down { color: var(--danger); }
+  .vp-list { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .vp-list h3 { margin: 0 0 6px; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
+  .vp-row { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; font-size: 0.88rem; color: var(--text); }
+  .vp-row .vp-set { color: var(--text-dim); font-size: 0.78rem; }
+  .vp-row .vp-amt { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .vp-note { margin-top: 10px; font-size: 0.74rem; color: var(--text-dim); }
   .cd-foot {
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1478,6 +1500,7 @@
       <div class="cd-rule"></div>
       <div class="cd-market">
         <span class="cd-label">Market price</span>
+        <div class="cd-mv" id="cdMV" hidden></div>
         <div class="cd-links">
           <a class="cd-link" id="cdPC" target="_blank" rel="noopener">PriceCharting<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
           <a class="cd-link" id="cdEbay" target="_blank" rel="noopener">eBay sold<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
@@ -1499,6 +1522,16 @@
     <div class="sheet-actions">
       <button type="button" class="btn-ghost" id="confirmKeep">Keep it</button>
       <button type="button" class="btn-danger" id="confirmRemoveBtn">Remove</button>
+    </div>
+  </div>
+</div>
+<div class="sheet-backdrop" id="valueAsk" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="vaTitle">
+    <h2 id="vaTitle">See what your collection is worth?</h2>
+    <div class="sub">A market value for each card you own and for your whole collection, from TCGplayer prices updated daily. Only you see it, and you can turn it off any time from the ⋯ menu.</div>
+    <div class="sheet-actions">
+      <button type="button" class="btn-ghost" id="vaNo">No thanks</button>
+      <button type="button" class="btn-primary" id="vaYes">Show it</button>
     </div>
   </div>
 </div>
@@ -1575,6 +1608,8 @@
     <button type="button" class="view-tab" data-view="trades">Trades<span class="pill" id="tradePill" hidden></span></button>
     <button type="button" class="view-tab" data-view="group">Group</button>
   </div>
+
+  <section class="value-panel" id="valuePanel" hidden aria-live="polite"></section>
 
   <header id="collectionHeader">
     <div class="search">
@@ -3847,6 +3882,15 @@
   // go with the tabs. Anything already marked for trade stays saved.
   document.querySelector('.filter-btn[data-filter="fortrade"]').hidden = !SOCIAL;
 
+  // Market value [see MARKET VALUE below]. Declared here so any render that
+  // runs before sign-in can read it safely.
+  let showValue = null;
+  let priceMap = {};          // "set|num" -> { variant: usd }
+  let weekMap = null;         // same, from the newest price day at least 7 days old
+  let weekDay = null;
+  let fxRate = null;          // IDR per USD
+  let lastValueRefresh = 0;
+
   let uid = null;          // signed-in user; every collection key in localStorage is namespaced by it
   let me = null;           // { id, username, binder_public, my_sets }
   let mySets = null;       // set ids this person collects; null = not chosen, show everything
@@ -4475,6 +4519,7 @@
     else cardEditions[num] = value;
     saveCardEditions();
     replaceCardInDom(num);
+    renderValuePanel();
   }
 
   function toggleWant(num) {
@@ -4546,6 +4591,8 @@
     const priceIn = document.getElementById("cdPrice");
     // Shown as 1.500.000; typed as plain digits.
     if (document.activeElement !== priceIn) priceIn.value = typeof price === "number" ? price.toLocaleString("id-ID") : "";
+
+    paintCardValue(card, ed);
 
     // Market price: search links for this exact copy. Nothing is fetched or
     // stored; the sites do the pricing. Printed totals as on the card [4/102].
@@ -4717,6 +4764,7 @@
     // Floor, so 101 of 102 never rounds up to a false 100%.
     ownedPctEl.textContent = `${Math.floor(pct)}%`;
     updateSetTabs();
+    renderValuePanel();
 
     if (n === 0) {
       latestPickupEl.textContent = "";
@@ -5504,6 +5552,7 @@
         <summary class="btn-ghost" aria-label="More">⋯</summary>
         <div class="menu-pop">
           <button type="button" data-act="sets">My sets</button>
+          <button type="button" data-act="value">${showValue ? "Hide market value" : "Show market value"}</button>
           <button type="button" data-act="export">Export backup</button>
           <button type="button" data-act="import">Import backup</button>
           ${me.binder_public ? `<button type="button" data-act="private">Make binder private</button>` : ""}
@@ -5519,6 +5568,7 @@
       if (!b) return;
       bar.querySelector("#acctMenu").open = false;
       if (b.dataset.act === "sets") openSetPicker(false);
+      else if (b.dataset.act === "value") setShowValue(!showValue);
       else if (b.dataset.act === "export") exportCollection();
       else if (b.dataset.act === "import") document.getElementById("importFile").click();
       else if (b.dataset.act === "private") setBinderPublic(false);
@@ -5616,6 +5666,7 @@
       const ids = Object.keys(SETS).filter(id => chosen.has(id));
       picker.hidden = true;
       applyMySets(ids);
+      maybeAskValue();
       const { error } = await sb.from("profiles").update({ my_sets: ids }).eq("id", uid);
       if (error) alert("Saved on this device, but not to your account yet: " + error.message);
     };
@@ -5624,6 +5675,186 @@
     document.getElementById("pickerTitle").textContent = firstRun ? "Which sets do you collect?" : "Your sets";
     draw();
     picker.hidden = false;
+  }
+
+  // ─── MARKET VALUE ─────────────────────────────────────────────────────────────
+  // Opt-in: asked once [profiles.show_value, null = not asked], changeable from
+  // the ⋯ menu. Prices come from the card_prices table, filled daily by the
+  // refresh-prices edge function from TCGdex [TCGplayer market prices per print],
+  // converted at the day's USD -> IDR rate. Raw prices only: graded cards show
+  // the raw value, Shadowless shows Unlimited, both labelled.
+
+  // [market value state is declared up with uid, so early renders can read it]
+
+  const isHoloCard = (card) => /holo|shining|star|crystal|secret/i.test(card.rarity || "");
+  const VARIANT_LABEL = {
+    "1st-edition-holofoil": "1st Ed holo", "1st-edition-normal": "1st Ed", "1st-edition": "1st Ed", "unlimited": "Unlimited",
+    "unlimited-holofoil": "Unlimited holo", "unlimited-normal": "Unlimited",
+    "holofoil": "Holo", "normal": "Non-holo", "reverse-holofoil": "Reverse holo",
+  };
+
+  // Which of a card's TCGplayer prices matches the copy you own.
+  function pickPrice(card, usd, ed) {
+    if (!usd) return null;
+    const holo = isHoloCard(card);
+    // TCGplayer names non-holo prints "unlimited" / "1st-edition" in the WotC
+    // sets and "normal" elsewhere, so both spellings are listed.
+    const plain = holo ? ["unlimited-holofoil", "holofoil", "unlimited", "unlimited-normal", "normal"]
+                       : ["unlimited", "unlimited-normal", "normal", "unlimited-holofoil", "holofoil"];
+    const wanted =
+      ed === "1st" ? (holo ? ["1st-edition-holofoil", "1st-edition", "1st-edition-normal"]
+                           : ["1st-edition", "1st-edition-normal", "1st-edition-holofoil"]) :
+      ed === "reverse" ? ["reverse-holofoil"] : plain;
+    for (const v of wanted) if (usd[v]) return { usd: usd[v], variant: v, approx: false };
+    // No price for that exact print [Base Set 1st Edition, Shadowless]: the
+    // closest one, flagged so the label says so.
+    for (const v of [...plain, ...Object.keys(usd)]) if (usd[v]) return { usd: usd[v], variant: v, approx: ed === "1st" || ed === "shadowless" };
+    return null;
+  }
+
+  // Owned cards, editions and prices paid for one set, from memory for the
+  // set on screen [freshest] and from storage for the rest.
+  function setState(id) {
+    const s = SETS[id];
+    return id === activeSetId
+      ? { owned, eds: cardEditions, paid: prices, conds: conditions }
+      : { owned: loadOwned(s.storageKey), eds: loadJSON(s.editionsKey), paid: loadJSON(s.priceKey), conds: loadJSON(s.condKey) };
+  }
+
+  function cardValue(setId, card, ed, map) {
+    const pick = pickPrice(card, (map || priceMap)[`${setId}|${card.num}`], ed);
+    return pick && fxRate ? { ...pick, idr: Math.round(pick.usd * fxRate) } : null;
+  }
+
+  async function loadValues() {
+    if (!sb || !showValue || readOnly) return;
+    const sets = Object.keys(SETS).filter(id => Object.keys(setState(id).owned).length);
+    if (!sets.length) { renderValuePanel(); return; }
+    const [pr, fx, wk] = await Promise.all([
+      sb.from("card_prices").select("set_id, num, usd").in("set_id", sets),
+      sb.from("fx_rates").select("usd_idr").order("day", { ascending: false }).limit(1).maybeSingle(),
+      sb.from("price_history").select("day").lte("day", new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10))
+        .order("day", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    priceMap = {};
+    for (const r of pr.data || []) priceMap[`${r.set_id}|${r.num}`] = r.usd;
+    fxRate = fx.data ? Number(fx.data.usd_idr) : null;
+    weekDay = wk.data ? wk.data.day : null;
+    weekMap = null;
+    if (weekDay) {
+      const { data } = await sb.from("price_history").select("set_id, num, usd").eq("day", weekDay).in("set_id", sets);
+      weekMap = {};
+      for (const r of data || []) weekMap[`${r.set_id}|${r.num}`] = r.usd;
+    }
+    renderValuePanel();
+    if (!cd.hidden && cdNum != null) paintCardDetail();
+    refreshMissingPrices();
+  }
+
+  // Cards nobody had priced yet [just added, or a new collector]: ask the
+  // price job for them now rather than waiting for tomorrow's run. At most
+  // once every ten minutes per device; the job ignores cards already fresh.
+  function refreshMissingPrices() {
+    const missing = Object.keys(SETS).some(id =>
+      Object.keys(setState(id).owned).some(num => !priceMap[`${id}|${num}`]));
+    if (!missing || Date.now() - lastValueRefresh < 10 * 60e3) return;
+    lastValueRefresh = Date.now();
+    // After the latest edits have synced, so the job sees the new cards.
+    setTimeout(() => {
+      fetch(`${SUPABASE_URL}/functions/v1/refresh-prices`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+        .then(r => r.ok ? loadValues() : null).catch(() => {});
+    }, 8000);
+  }
+
+  function renderValuePanel() {
+    const panel = document.getElementById("valuePanel");
+    if (!panel) return;
+    if (!showValue || readOnly || !fxRate) { panel.hidden = true; return; }
+    let total = 0, priced = 0, ownedN = 0, paidSum = 0, paidValue = 0, paidN = 0, weekNow = 0, weekThen = 0;
+    const rows = [], movers = [];
+    for (const id of Object.keys(SETS)) {
+      const st = setState(id);
+      for (const num of Object.keys(st.owned)) {
+        const card = SETS[id].cards.find(c => String(c.num) === String(num));
+        if (!card) continue;
+        ownedN++;
+        const v = cardValue(id, card, st.eds[num]);
+        if (!v) continue;
+        priced++;
+        total += v.idr;
+        rows.push({ id, card, idr: v.idr });
+        if (typeof st.paid[num] === "number") { paidSum += st.paid[num]; paidValue += v.idr; paidN++; }
+        if (weekMap) {
+          const then = pickPrice(card, weekMap[`${id}|${num}`], st.eds[num]);
+          if (then && then.variant === v.variant) {
+            const thenIdr = Math.round(then.usd * fxRate);
+            weekNow += v.idr; weekThen += thenIdr;
+            movers.push({ id, card, delta: v.idr - thenIdr });
+          }
+        }
+      }
+    }
+    if (!ownedN) { panel.hidden = true; return; }
+    const signed = (n) => (n >= 0 ? "+" : "−") + fmtIDR(Math.abs(n));
+    const cls = (n) => n >= 0 ? "vp-up" : "vp-down";
+    const pct = (a, b) => b ? ` (${a >= b ? "+" : "−"}${Math.abs(Math.round((a - b) / b * 100))}%)` : "";
+    const lines = [];
+    if (paidN) lines.push(`<span><b class="${cls(paidValue - paidSum)}">${signed(paidValue - paidSum)}${pct(paidValue, paidSum)}</b> vs what you paid, on the ${paidN} card${paidN === 1 ? "" : "s"} with a price logged</span>`);
+    lines.push(weekMap && weekThen
+      ? `<span><b class="${cls(weekNow - weekThen)}">${signed(weekNow - weekThen)}</b> since ${fmtDate(weekDay)}</span>`
+      : `<span>Weekly change shows once a week of prices has built up.</span>`);
+    const risers = movers.filter(m => m.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 3);
+    const list = risers.length
+      ? { title: "Biggest risers this week", items: risers.map(m => ({ ...m, amt: signed(m.delta) })) }
+      : { title: "Most valuable", items: rows.sort((a, b) => b.idr - a.idr).slice(0, 3).map(r => ({ ...r, amt: fmtIDR(r.idr) })) };
+    panel.innerHTML = `
+      <div class="vp-label">Collection value</div>
+      <div class="vp-total">${fmtIDR(total)}</div>
+      <div class="vp-lines">${lines.join("")}</div>
+      ${list.items.length ? `<div class="vp-list"><h3>${list.title}</h3>${list.items.map(m =>
+        `<div class="vp-row"><span>${escapeAttr(m.card.name)}</span><span class="vp-set">${escapeAttr(SETS[m.id].name)} · No. ${escapeAttr(cardLabel(m.card))}</span><span class="vp-amt">${m.amt}</span></div>`).join("")}</div>` : ""}
+      <div class="vp-note">${priced} of ${ownedN} cards priced · TCGplayer market prices, updated daily · graded cards count at their raw price</div>`;
+    panel.hidden = false;
+  }
+
+  function paintCardValue(card, ed) {
+    const el = document.getElementById("cdMV");
+    if (!showValue || !fxRate) { el.hidden = true; return; }
+    const v = cardValue(activeSetId, card, ed);
+    const cond = conditions[cdNum] || "";
+    if (!v) {
+      el.innerHTML = `<span>No market price for this card yet.</span>`;
+    } else {
+      const notes = [VARIANT_LABEL[v.variant] || v.variant, "TCGplayer"];
+      if (v.approx) notes.push(ed === "shadowless" ? "Shadowless not priced separately" : "1st Edition not priced, showing the closest print");
+      if (GRADED_CONDS.includes(cond)) notes.push("raw price, not " + cond);
+      el.innerHTML = `<b>${fmtIDR(v.idr)}</b><span>US$${v.usd.toFixed(2)} · ${escapeAttr(notes.join(" · "))}</span>`;
+    }
+    el.hidden = false;
+  }
+
+  async function setShowValue(on) {
+    showValue = on;
+    if (me) me.show_value = on;
+    renderAccountBar();
+    if (on) loadValues(); else renderValuePanel();
+    if (!cd.hidden && cdNum != null) paintCardDetail();
+    if (sb && uid) {
+      const { error } = await sb.from("profiles").update({ show_value: on }).eq("id", uid);
+      if (error) console.warn("show_value not saved:", error.message);
+    }
+  }
+
+  // Ask once, never on top of the set picker, and only once there are cards to value.
+  function maybeAskValue() {
+    if (showValue != null || readOnly) return;
+    if (!document.getElementById("setPicker").hidden) return;
+    const any = Object.keys(SETS).some(id => Object.keys(setState(id).owned).length);
+    if (!any) return;
+    const box = document.getElementById("valueAsk");
+    document.getElementById("vaYes").onclick = () => { box.hidden = true; setShowValue(true); };
+    document.getElementById("vaNo").onclick = () => { box.hidden = true; setShowValue(false); };
+    box.hidden = false;
   }
 
   async function startApp(user) {
@@ -5641,7 +5872,7 @@
     render();
     const firstLoad = initialLoad();
 
-    const { data: prof } = await sb.from("profiles").select("id, username, binder_public, my_sets").eq("id", uid).maybeSingle();
+    const { data: prof } = await sb.from("profiles").select("id, username, binder_public, my_sets, show_value").eq("id", uid).maybeSingle();
     if (prof) {
       me = prof;
       renderAccountBar();
@@ -5649,6 +5880,10 @@
       // so the sets they already collect come pre-ticked.
       if (prof.my_sets) applyMySets(prof.my_sets);
       else firstLoad.then(() => openSetPicker(true));
+      showValue = prof.show_value;
+      renderAccountBar();
+      if (showValue) firstLoad.then(loadValues);
+      else if (showValue == null) firstLoad.then(maybeAskValue);
     }
 
     activeGroupId = localStorage.getItem(lk("activeGroup"));
