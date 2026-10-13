@@ -1280,6 +1280,16 @@
   .cd-price input:focus { outline: none; }
   .cd-price input::-webkit-outer-spin-button, .cd-price input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .cd-note { font-size: 0.78rem; color: var(--text-dim); }
+  .cd-market { display: flex; flex-direction: column; gap: 8px; }
+  .cd-links { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cd-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 14px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text); font-size: 0.88rem; font-weight: 600; text-decoration: none;
+  }
+  .cd-link:hover { border-color: var(--accent); }
+  .cd-link svg { width: 14px; height: 14px; color: var(--text-dim); }
   .cd-foot {
     flex: 0 0 auto;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1464,6 +1474,15 @@
         <span class="cd-price-row"><span class="cd-cur">Rp</span><input type="text" id="cdPrice" inputmode="numeric" autocomplete="off" placeholder="Add a price"></span>
         <span class="cd-note">Private - only you ever see this.</span>
       </label>
+      <div class="cd-rule"></div>
+      <div class="cd-market">
+        <span class="cd-label">Market price</span>
+        <div class="cd-links">
+          <a class="cd-link" id="cdPC" target="_blank" rel="noopener">PriceCharting<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+          <a class="cd-link" id="cdEbay" target="_blank" rel="noopener">eBay sold<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+        </div>
+        <span class="cd-note" id="cdMarketQ"></span>
+      </div>
     </div>
     <div class="cd-foot">
       <span class="cd-since" id="cdSince"></span>
@@ -4526,8 +4545,40 @@
     // Shown as 1.500.000; typed as plain digits.
     if (document.activeElement !== priceIn) priceIn.value = typeof price === "number" ? price.toLocaleString("id-ID") : "";
 
+    // Market price: search links for this exact copy. Nothing is fetched or
+    // stored; the sites do the pricing. Printed totals as on the card [4/102].
+    const q = marketQuery(card, ed, cond);
+    document.getElementById("cdMarketQ").textContent = "Searches for " + q;
+    // PriceCharting matches product names [set, name, number] and lists every
+    // grade on the product page, so it gets the plain query; eBay gets it all.
+    const setName = activeSetId === "base" ? "Base Set" : SETS[activeSetId].name;
+    document.getElementById("cdPC").href = "https://www.pricecharting.com/search-products?type=prices&q=" +
+      encodeURIComponent(["pokemon", activeSetId === "promos" ? "promo" : setName, card.name, cardLabel(card)].join(" "));
+    document.getElementById("cdEbay").href =
+      "https://www.ebay.com/sch/i.html?LH_Sold=1&LH_Complete=1&_nkw=" + encodeURIComponent(q);
+
     document.getElementById("cdSince").innerHTML =
       `In your collection since <b>${escapeAttr(fmtDate(owned[cdNum]))}</b>`;
+  }
+
+  const PRINTED_TOTAL = {
+    base: 102, jungle: 64, fossil: 62, baseset2: 130, teamrocket: 82, legendary: 110,
+    gymheroes: 132, gymchallenge: 132, neogenesis: 111, neodiscovery: 75, neorevelation: 64,
+    neodestiny: 105, expedition: 165, aquapolis: 147, skyridge: 144, southernislands: 18,
+  };
+  function marketQuery(card, ed, cond) {
+    const set = SETS[activeSetId];
+    const label = cardLabel(card);
+    const number =
+      activeSetId === "promos" ? "Black Star Promo #" + label :
+      activeSetId === "bestofgame" ? "Best of Game #" + label :
+      /^H\d+$/.test(label) ? label + "/H32" :
+      label + "/" + (PRINTED_TOTAL[activeSetId] || set.cards.length);
+    const setName = activeSetId === "base" ? "Base Set" : set.name;
+    const parts = [card.name, number, activeSetId === "promos" || activeSetId === "bestofgame" ? "" : setName];
+    if (ed && ed !== "unlimited") parts.push(editionLabel(activeSetId, ed).replace("1st Ed", "1st Edition"));
+    if (cond && GRADED_CONDS.includes(cond)) parts.push(cond);
+    return parts.filter(Boolean).join(" ");
   }
 
   function openCardDetail(num) {
