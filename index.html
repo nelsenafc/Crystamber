@@ -4809,7 +4809,8 @@
 
     const priceVals = Object.values(prices).filter(v => typeof v === "number" && !isNaN(v));
     const filled = priceVals.length;
-    if (filled === 0) {
+    // With market value on, each set's tile already shows what you paid.
+    if (filled === 0 || showValue) {
       spendStatEl.textContent = "";
     } else {
       const total = priceVals.reduce((a, b) => a + b, 0);
@@ -5881,6 +5882,7 @@
     if (me) me.show_value = on;
     renderAccountBar();
     if (on) loadValues(); else renderValuePanel();
+    updateProgress();
     if (!cd.hidden && cdNum != null) paintCardDetail();
     if (sb && uid) {
       const { error } = await sb.from("profiles").update({ show_value: on }).eq("id", uid);
@@ -5925,6 +5927,7 @@
       else firstLoad.then(() => openSetPicker(true));
       showValue = prof.show_value;
       renderAccountBar();
+      updateProgress();
       if (showValue) firstLoad.then(loadValues);
       else if (showValue == null) firstLoad.then(maybeAskValue);
     }
