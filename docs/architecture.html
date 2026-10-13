@@ -94,11 +94,11 @@
       <svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#0f0f1e" stroke-width="3" stroke-linejoin="round"><polygon points="10,36 30,18 40,36" fill="#ffd166"/><polygon points="30,18 70,18 60,36 40,36" fill="#ffe9a8"/><polygon points="70,18 90,36 60,36" fill="#ffb703"/><polygon points="10,36 40,36 50,82" fill="#f48c06"/><polygon points="40,36 60,36 50,82" fill="#ffb703"/><polygon points="60,36 90,36 50,82" fill="#dc5f00"/></g></svg>
       Crystamber Architecture
     </h1>
-    <p>How a tap on a card turns into a saved collection. There is no server of our own: a static web app on Vercel, data and sign-in on Supabase, and GitHub for shipping.</p>
-    <div class="meta">crystamber.vercel.app · repo nelsenafc/Crystamber · as of 12 Oct 2026</div>
+    <p>How a tap on a card turns into a saved collection. There is no server of our own: a static web app on Vercel at crystamber.com, data and sign-in on Supabase, account emails through Resend, and GitHub for shipping.</p>
+    <div class="meta">crystamber.com · repo nelsenafc/Crystamber · as of 13 Oct 2026</div>
   </header>
 
-  <div class="diagram" role="img" aria-label="Architecture diagram: the web app on your phone loads from Vercel, saves to Supabase, is deployed from GitHub, and a GitHub Action keeps Supabase awake.">
+  <div class="diagram" role="img" aria-label="Architecture diagram: the web app on your phone loads from Vercel at crystamber.com, saves to Supabase, which sends account emails through Resend. It is deployed from GitHub, a GitHub Action keeps Supabase awake, and each card links out to PriceCharting and eBay for market prices.">
     <svg viewBox="0 0 1130 690" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
@@ -117,6 +117,12 @@
       <text class="t1" x="145" y="110" text-anchor="middle">You</text>
       <text class="t2" x="145" y="125" text-anchor="middle">phone or browser</text>
       <path class="wire" d="M220,111 H298" marker-end="url(#a)"/>
+
+      <!-- Market price links -->
+      <path class="wire" d="M300,168 H262 V209 H222" marker-end="url(#a)"/>
+      <rect class="box src" x="70" y="184" width="150" height="52" rx="12"/>
+      <text class="t1" x="145" y="206" text-anchor="middle">PriceCharting · eBay</text>
+      <text class="t2" x="145" y="223" text-anchor="middle">Market price, per card</text>
 
       <!-- Web app container -->
       <rect class="container" x="300" y="40" width="470" height="150" rx="14"/>
@@ -144,7 +150,7 @@
       <rect class="box host" x="300" y="250" width="470" height="90" rx="12"/>
       <text class="t1" x="535" y="276" text-anchor="middle">Vercel · static hosting</text>
       <text class="t2" x="535" y="296" text-anchor="middle">Page, 1,789 card images [WebP + AVIF], set symbols, supabase-js 2.116.0</text>
-      <text class="t3" x="535" y="318" text-anchor="middle">images cached 1 year · page re-checked every visit</text>
+      <text class="t3" x="535" y="318" text-anchor="middle">crystamber.com [www → 308] · images cached 1 year</text>
 
       <!-- Supabase -->
       <path class="box data" d="M930,56 a90,16 0 0 1 180,0 V320 a90,16 0 0 1 -180,0 Z"/>
@@ -180,9 +186,18 @@
       <text class="t1" x="657" y="418" text-anchor="middle">GitHub Actions</text>
       <text class="t2" x="657" y="436" text-anchor="middle">Keepalive, once a day</text>
       <text class="t3" x="657" y="454" text-anchor="middle">stops the free-tier pause</text>
-      <path class="wire data" d="M770,429 H1020 V338" marker-end="url(#ad)"/>
+      <path class="wire data" d="M770,429 H985 V338" marker-end="url(#ad)"/>
       <rect class="tag data" x="840" y="418" width="122" height="22" rx="11"/>
       <text class="tag-t" x="901" y="433" text-anchor="middle">keepalive_ping()</text>
+
+      <!-- Resend -->
+      <path class="wire data" d="M1065,338 V488" marker-end="url(#ad)"/>
+      <rect class="tag data" x="1018" y="398" width="94" height="22" rx="11"/>
+      <text class="tag-t" x="1065" y="413" text-anchor="middle">Auth emails</text>
+      <rect class="box src" x="960" y="490" width="150" height="70" rx="12"/>
+      <text class="t1" x="1035" y="514" text-anchor="middle">Resend</text>
+      <text class="t2" x="1035" y="532" text-anchor="middle">Reset + confirm emails</text>
+      <text class="t3" x="1035" y="549" text-anchor="middle">from crystamber.com</text>
 
       <!-- Sources -->
       <rect class="box src" x="300" y="540" width="150" height="66" rx="12"/>
@@ -204,8 +219,8 @@
         <circle cx="70" cy="0" r="5" fill="var(--c-host)"/><text class="lg" x="82" y="4">Hosting</text>
         <circle cx="160" cy="0" r="5" fill="var(--c-data)"/><text class="lg" x="172" y="4">Data</text>
         <circle cx="230" cy="0" r="5" fill="var(--c-ship)"/><text class="lg" x="242" y="4">Delivery</text>
-        <circle cx="320" cy="0" r="5" fill="var(--c-src)"/><text class="lg" x="332" y="4">Sources</text>
-        <path class="wire dash" d="M410,0 H440"/><text class="lg" x="448" y="4">build time only</text>
+        <circle cx="320" cy="0" r="5" fill="var(--c-src)"/><text class="lg" x="332" y="4">Outside services</text>
+        <path class="wire dash" d="M450,0 H480"/><text class="lg" x="488" y="4">build time only</text>
       </g>
     </svg>
   </div>
@@ -244,6 +259,9 @@
           <tr><td>Images</td><td><code>img/</code> on Vercel</td><td>Card art as WebP with AVIF copies, set symbols as single-colour masks, homepage photos.</td></tr>
           <tr><td>Your collection</td><td>Supabase <code>user_sets</code> + this device</td><td>Row-level security: each person can only read and write their own rows.</td></tr>
           <tr><td>Schema</td><td><code>supabase/migrations/</code></td><td>Three migrations: multi-user [14 Sep], my sets [15 Sep], keepalive write [11 Oct].</td></tr>
+          <tr><td>Domain</td><td>crystamber.com on Vercel</td><td>Bought 13 Oct, renews yearly. www redirects permanently to crystamber.com; crystamber.vercel.app still works.</td></tr>
+          <tr><td>Account emails</td><td>Resend, sent from crystamber.com</td><td>Supabase Auth hands password-reset and sign-up emails to Resend over SMTP. Setting up as of 13 Oct.</td></tr>
+          <tr><td>Market price</td><td>Links on each card's page</td><td>PriceCharting opens the card's own page [set, edition, number]; eBay searches sold listings for the exact copy. Nothing is fetched or stored.</td></tr>
           <tr><td>Keepalive</td><td><code>.github/workflows/keepalive.yml</code></td><td>Daily write so the free project is never idle for a week.</td></tr>
         </tbody>
       </table>
@@ -262,7 +280,7 @@
         <thead><tr><th>Limit</th><th>Status</th><th>What it means</th></tr></thead>
         <tbody>
           <tr><td>Free-tier pause</td><td><span class="pill ok">Handled</span></td><td>Supabase pauses idle free projects. It happened twice; a daily write ping replaced the old read ping on 11 Oct.</td></tr>
-          <tr><td>Email confirmation off</td><td><span class="pill watch">Watch</span></td><td>Sign-ups go straight in. Supabase's built-in mailer only reaches its own team, so password resets need a real email service and a domain before strangers join.</td></tr>
+          <tr><td>Email confirmation off</td><td><span class="pill watch">In progress</span></td><td>Sign-ups go straight in, and Supabase's built-in mailer only reaches its own team. The domain is in place; Resend is being connected so resets reach everyone, then confirmation goes back on.</td></tr>
           <tr><td>Card art and symbols</td><td><span class="pill risk">Before charging</span></td><td>They belong to Nintendo and The Pokémon Company. Fine for a free fan tool; needs a plan before any paid version.</td></tr>
           <tr><td>No automated tests</td><td><span class="pill watch">Watch</span></td><td>Every release is syntax-checked and tried on a local copy first. The service worker keeps whatever page it last fetched, so a broken release would stick on phones until the next one.</td></tr>
         </tbody>
