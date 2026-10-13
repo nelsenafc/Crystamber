@@ -1301,8 +1301,10 @@
     margin-bottom: 14px; padding: 16px 18px;
     border: 1px solid var(--border); border-radius: 16px; background: var(--bg-2);
   }
-  .vp-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .vp-total { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; margin-right: auto; }
+  .vp-head { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+  .vp-title { margin-right: auto; display: flex; flex-direction: column; gap: 2px; }
+  .vp-label { font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
+  .vp-total { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); font-variant-numeric: tabular-nums; }
   .vp-pill { font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .vp-pill.up   { background: rgba(74,222,128,0.14); color: var(--success); }
   .vp-pill.down { background: rgba(248,113,113,0.14); color: var(--danger); }
@@ -1320,7 +1322,10 @@
   .vp-tile:hover { background: var(--surface-2); }
   .vp-sym { flex: 0 0 auto; width: 26px; height: 26px; background: var(--text);
     -webkit-mask: var(--sym) center / contain no-repeat; mask: var(--sym) center / contain no-repeat; }
-  .vp-amt { font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .vp-amt { display: grid; grid-template-columns: auto auto; column-gap: 8px; row-gap: 1px; align-items: baseline; font-variant-numeric: tabular-nums; }
+  .vp-amt em { font-style: normal; font-size: 0.72rem; color: var(--text-dim); }
+  .vp-amt b { font-size: 0.98rem; font-weight: 700; }
+  .vp-amt span { font-size: 0.86rem; color: var(--text-dim); }
   .vp-note { margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
   .cd-foot {
     flex: 0 0 auto;
@@ -5831,7 +5836,7 @@
     const noteOpen = panel.querySelector(".vp-note") && !panel.querySelector(".vp-note").hidden;
     panel.innerHTML = `
       <div class="vp-head">
-        <span class="vp-total">Rp ${fmtShort(total)}</span>
+        <div class="vp-title"><span class="vp-label">Total collection value</span><span class="vp-total">Rp ${fmtShort(total)}</span></div>
         ${pills.join("")}
         <button type="button" class="vp-info" aria-label="About these prices" aria-expanded="${noteOpen}">ⓘ</button>
       </div>
@@ -5839,7 +5844,7 @@
         <button type="button" class="vp-tile ${trend(r.paidValue, r.paid)}" data-set="${r.id}"
           title="${escapeAttr(SETS[r.id].name)}: ${fmtIDR(r.value)}${r.paid ? ` · paid ${fmtIDR(r.paid)} for the priced cards` : ""}">
           <i class="vp-sym" style="--sym:url(img/symbols/${r.id}.${r.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>
-          <span class="vp-amt">${fmtShort(r.value)}</span>
+          <span class="vp-amt"><em>Value</em><b>${fmtShort(r.value)}</b>${r.paid ? `<em>Paid</em><span>${fmtShort(r.paid)}</span>` : ""}</span>
         </button>`).join("")}
       </div>
       <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. A tile's line turns green or red when that set is worth more or less than you paid.</div>`;
