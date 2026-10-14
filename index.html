@@ -1309,14 +1309,14 @@
   .vp-pill.flat { background: var(--surface-2); color: var(--text-dim); }
   .vp-info { display: grid; place-items: center; width: 26px; height: 26px; border: none; border-radius: 50%; background: transparent; color: var(--text-dim); cursor: pointer; font: inherit; font-size: 0.9rem; }
   .vp-info:hover { background: var(--surface-2); color: var(--text); }
-  /* Value under each set's progress. The divider turns green or red when the
-     set is worth more or less than was paid for it. */
-  .set-switch .st-val { display: grid; margin-top: 4px; padding-top: 6px; border-top: 2px solid var(--border); font-variant-numeric: tabular-nums; }
+  /* Value under each set's progress, with the same "vs paid" chip as the
+     total, so the progress bar is the only line in the tab. */
+  .set-switch .st-val { display: grid; row-gap: 1px; margin-top: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .set-switch .st-val[hidden] { display: none; }
-  .set-switch .st-val.up   { border-top-color: var(--success); }
-  .set-switch .st-val.down { border-top-color: var(--danger); }
+  .set-switch .st-val span { display: flex; align-items: baseline; gap: 5px; }
   .set-switch .st-val b { font-size: 0.92rem; font-weight: 700; color: var(--text); }
   .set-switch .st-val em { font-style: normal; font-size: 0.72rem; color: var(--text-dim); }
+  .set-switch .st-val .vp-pill { font-style: normal; font-size: 0.68rem; padding: 1px 6px; }
   .vp-note { margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
   .cd-foot {
     flex: 0 0 auto;
@@ -5833,7 +5833,7 @@
         ${pills.join("")}
         <button type="button" class="vp-info" aria-label="About these prices" aria-expanded="${noteOpen}">ⓘ</button>
       </div>
-      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. A set's line turns green or red when it is worth more or less than you paid.</div>`;
+      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. Each set's % compares its priced cards with what you paid for them.</div>`;
     panel.querySelector(".vp-info").onclick = () => {
       const n = panel.querySelector(".vp-note");
       n.hidden = !n.hidden;
@@ -5845,8 +5845,8 @@
       if (!el) return;
       el.hidden = !r;
       if (!r) return;
-      el.className = "st-val " + trend(r.paidValue, r.paid);
-      el.innerHTML = `<b>${fmtShort(r.value)}</b>${r.paid ? `<em>paid ${fmtShort(r.paid)}</em>` : ""}`;
+      const chip = r.paid ? `<i class="vp-pill ${trend(r.paidValue, r.paid)}">${pctText(r.paidValue, r.paid)}</i>` : "";
+      el.innerHTML = `<span><em>value</em><b>${fmtShort(r.value)}</b>${chip}</span>${r.paid ? `<em>paid ${fmtShort(r.paid)}</em>` : ""}`;
       el.title = `${fmtIDR(r.value)}${r.paid ? ` · paid ${fmtIDR(r.paid)} for the priced cards` : ""}`;
     });
     panel.hidden = false;
