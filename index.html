@@ -5893,6 +5893,19 @@
     box.hidden = false;
   }
 
+  // Usage: one row per collector per day the app is opened, so we can see
+  // weekly actives and who comes back. Also on resume, because an installed
+  // app can stay open across days without reloading.
+  function logOpen() {
+    if (!uid || readOnly) return;
+    const day = todayISO();
+    try { if (localStorage.getItem(lk("openLogged")) === day) return; } catch (_) {}
+    sb.rpc("log_app_open").then(({ error }) => {
+      if (!error) try { localStorage.setItem(lk("openLogged"), day); } catch (_) {}
+    });
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") logOpen(); });
+
   async function startApp(user) {
     if (uid) return;
     uid = user.id;
@@ -5907,6 +5920,7 @@
     updateProgress();
     render();
     const firstLoad = initialLoad();
+    logOpen();
 
     const { data: prof } = await sb.from("profiles").select("id, username, binder_public, my_sets, show_value").eq("id", uid).maybeSingle();
     if (prof) {
