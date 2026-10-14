@@ -6,7 +6,7 @@
 // USD -> IDR from Frankfurter [ECB rates, free, no key].
 //
 // Called daily by pg_cron, and by the app when someone's cards have no price
-// yet. It never re-prices a card priced in the last 20 hours and only prices
+// yet. It never re-prices a card priced in the last 12 hours and only prices
 // cards that appear in someone's collection, so a stray or repeated call costs
 // nothing and can't be used to hammer TCGdex. That is why it runs without a
 // JWT check: it reads nothing private and returns only counts.
@@ -53,8 +53,8 @@ Deno.serve(async (req) => {
     for (const num of Object.keys(r.owned ?? {})) owned.add(`${r.set_id}|${num}`);
   }
 
-  // Skip what was priced in the last 20 hours.
-  const since = new Date(Date.now() - 20 * 3600e3).toISOString();
+  // Skip what was priced in the last 12 hours, so an evening price never blocks the 08:00 run.
+  const since = new Date(Date.now() - 12 * 3600e3).toISOString();
   const { data: fresh } = await sb.from("card_prices").select("set_id, num").gte("updated_at", since);
   const isFresh = new Set((fresh ?? []).map((r) => `${r.set_id}|${r.num}`));
   const todo = [...owned].filter((k) => !isFresh.has(k)).slice(0, 800);
