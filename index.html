@@ -1295,12 +1295,10 @@
   .cd-mv b { font-size: 1.35rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
   .cd-mv span { font-size: 0.8rem; color: var(--text-dim); }
 
-  /* Collection value: one calm panel above the set header. Only shown to
-     people who said yes to seeing prices. */
-  .value-panel {
-    margin-bottom: 14px; padding: 16px 18px;
-    border: 1px solid var(--border); border-radius: 16px; background: var(--bg-2);
-  }
+  /* Collection value: the total sits at the top of the set card and each set
+     tab carries its own value and what was paid, so every set shows once.
+     Only shown to people who said yes to seeing prices. */
+  .value-panel { margin-bottom: 16px; }
   .vp-head { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
   .vp-title { margin-right: auto; display: flex; flex-direction: column; gap: 2px; }
   .vp-label { font-size: 0.78rem; font-weight: 600; color: var(--text-dim); }
@@ -1311,21 +1309,14 @@
   .vp-pill.flat { background: var(--surface-2); color: var(--text-dim); }
   .vp-info { display: grid; place-items: center; width: 26px; height: 26px; border: none; border-radius: 50%; background: transparent; color: var(--text-dim); cursor: pointer; font: inherit; font-size: 0.9rem; }
   .vp-info:hover { background: var(--surface-2); color: var(--text); }
-  .vp-tiles { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-  .vp-tile {
-    display: flex; align-items: center; gap: 10px; padding: 12px;
-    border: none; border-radius: 12px; background: var(--surface); color: var(--text);
-    box-shadow: inset 0 -3px 0 var(--border); cursor: pointer; font: inherit; text-align: left;
-  }
-  .vp-tile.up   { box-shadow: inset 0 -3px 0 var(--success); }
-  .vp-tile.down { box-shadow: inset 0 -3px 0 var(--danger); }
-  .vp-tile:hover { background: var(--surface-2); }
-  .vp-sym { flex: 0 0 auto; width: 26px; height: 26px; background: var(--text);
-    -webkit-mask: var(--sym) center / contain no-repeat; mask: var(--sym) center / contain no-repeat; }
-  .vp-amt { display: grid; grid-template-columns: auto auto; column-gap: 8px; row-gap: 1px; align-items: baseline; font-variant-numeric: tabular-nums; }
-  .vp-amt em { font-style: normal; font-size: 0.72rem; color: var(--text-dim); }
-  .vp-amt b { font-size: 0.98rem; font-weight: 700; }
-  .vp-amt span { font-size: 0.86rem; color: var(--text-dim); }
+  /* Value under each set's progress. The divider turns green or red when the
+     set is worth more or less than was paid for it. */
+  .set-switch .st-val { display: grid; margin-top: 4px; padding-top: 6px; border-top: 2px solid var(--border); font-variant-numeric: tabular-nums; }
+  .set-switch .st-val[hidden] { display: none; }
+  .set-switch .st-val.up   { border-top-color: var(--success); }
+  .set-switch .st-val.down { border-top-color: var(--danger); }
+  .set-switch .st-val b { font-size: 0.92rem; font-weight: 700; color: var(--text); }
+  .set-switch .st-val em { font-style: normal; font-size: 0.72rem; color: var(--text-dim); }
   .vp-note { margin-top: 10px; font-size: 0.76rem; color: var(--text-dim); line-height: 1.5; }
   .cd-foot {
     flex: 0 0 auto;
@@ -1623,14 +1614,14 @@
     <button type="button" class="view-tab" data-view="group">Group</button>
   </div>
 
-  <section class="value-panel" id="valuePanel" hidden aria-live="polite"></section>
+  <div class="search" id="searchBar">
+    <input id="searchInput" type="search" placeholder="Search cards" autocomplete="off" autocapitalize="none"
+           spellcheck="false" enterkeyhint="go" aria-label="Search cards in every set">
+    <div class="search-results" id="searchResults" hidden></div>
+  </div>
 
   <header id="collectionHeader">
-    <div class="search">
-      <input id="searchInput" type="search" placeholder="Search cards" autocomplete="off" autocapitalize="none"
-             spellcheck="false" enterkeyhint="go" aria-label="Search cards in every set">
-      <div class="search-results" id="searchResults" hidden></div>
-    </div>
+    <section class="value-panel" id="valuePanel" hidden aria-live="polite"></section>
     <div class="era-tabs" id="eraTabs"></div>
     <div class="set-switch" id="setTabs"></div>
 
@@ -3878,7 +3869,7 @@
       .map(e => `<button type="button" class="era-tab${e.id === era.id ? " active" : ""}" data-era="${e.id}">${e.name}<span class="era-count"></span></button>`)
       .join("") + editBtn("era-tab era-edit");
     document.getElementById("setTabs").innerHTML = era.sets.filter(id => vis.includes(id)).map(id => SETS[id]).map(s =>
-      `<button class="set-tab" data-set="${s.id}"><span class="st-name"><i class="st-sym" style="--sym:url(img/symbols/${s.id}.${s.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>${s.name}</span><span class="st-count"></span><span class="st-bar"><i></i></span></button>`
+      `<button class="set-tab" data-set="${s.id}"><span class="st-name"><i class="st-sym" style="--sym:url(img/symbols/${s.id}.${s.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>${s.name}</span><span class="st-count"></span><span class="st-bar"><i></i></span><span class="st-val" hidden></span></button>`
     ).join("") + (oneEra ? editBtn("set-edit") : "");
   }
 
@@ -5794,7 +5785,8 @@
   function renderValuePanel() {
     const panel = document.getElementById("valuePanel");
     if (!panel) return;
-    if (!showValue || readOnly || !fxRate) { panel.hidden = true; return; }
+    const hideVals = () => document.querySelectorAll("#setTabs .st-val").forEach(el => el.hidden = true);
+    if (!showValue || readOnly || !fxRate) { panel.hidden = true; hideVals(); return; }
     let total = 0, priced = 0, ownedN = 0, paidSum = 0, paidValue = 0, weekNow = 0, weekThen = 0;
     const sets = [];
     for (const id of Object.keys(SETS)) {
@@ -5821,7 +5813,7 @@
       }
       sets.push(row);
     }
-    if (!ownedN) { panel.hidden = true; return; }
+    if (!ownedN) { panel.hidden = true; hideVals(); return; }
     // Within 2% of what you paid counts as even.
     const trend = (now, then) => !then ? "flat" : now > then * 1.02 ? "up" : now < then * 0.98 ? "down" : "flat";
     const pctText = (now, then) => {
@@ -5841,22 +5833,21 @@
         ${pills.join("")}
         <button type="button" class="vp-info" aria-label="About these prices" aria-expanded="${noteOpen}">ⓘ</button>
       </div>
-      <div class="vp-tiles">${sets.sort((a, b) => b.value - a.value).map(r => `
-        <button type="button" class="vp-tile ${trend(r.paidValue, r.paid)}" data-set="${r.id}"
-          title="${escapeAttr(SETS[r.id].name)}: ${fmtIDR(r.value)}${r.paid ? ` · paid ${fmtIDR(r.paid)} for the priced cards` : ""}">
-          <i class="vp-sym" style="--sym:url(img/symbols/${r.id}.${r.id === "base" ? "svg" : "png"})" aria-hidden="true"></i>
-          <span class="vp-amt"><em>Value</em><b>${fmtShort(r.value)}</b>${r.paid ? `<em>Paid</em><span>${fmtShort(r.paid)}</span>` : ""}</span>
-        </button>`).join("")}
-      </div>
-      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. A tile's line turns green or red when that set is worth more or less than you paid.</div>`;
+      <div class="vp-note"${noteOpen ? "" : " hidden"}>Rp ${fmtIDR(total).replace(/^Rp\s?/, "")} for ${priced} of ${ownedN} cards. TCGplayer market prices, updated daily. Graded cards count at their raw price. A set's line turns green or red when it is worth more or less than you paid.</div>`;
     panel.querySelector(".vp-info").onclick = () => {
       const n = panel.querySelector(".vp-note");
       n.hidden = !n.hidden;
       panel.querySelector(".vp-info").setAttribute("aria-expanded", String(!n.hidden));
     };
-    panel.querySelectorAll(".vp-tile").forEach(t => t.onclick = () => {
-      switchSet(t.dataset.set);
-      document.getElementById("collectionHeader").scrollIntoView({ behavior: "smooth", block: "start" });
+    const bySet = Object.fromEntries(sets.map(r => [r.id, r]));
+    document.querySelectorAll("#setTabs .set-tab").forEach(tab => {
+      const r = bySet[tab.dataset.set], el = tab.querySelector(".st-val");
+      if (!el) return;
+      el.hidden = !r;
+      if (!r) return;
+      el.className = "st-val " + trend(r.paidValue, r.paid);
+      el.innerHTML = `<b>${fmtShort(r.value)}</b>${r.paid ? `<em>paid ${fmtShort(r.paid)}</em>` : ""}`;
+      el.title = `${fmtIDR(r.value)}${r.paid ? ` · paid ${fmtIDR(r.paid)} for the priced cards` : ""}`;
     });
     panel.hidden = false;
   }
@@ -6251,6 +6242,7 @@
     document.querySelectorAll(".view-tab").forEach(b => b.classList.toggle("active", b.dataset.view === view));
     const isCollection = view === "collection";
     document.getElementById("collectionHeader").hidden = !isCollection;
+    document.getElementById("searchBar").hidden = !isCollection;
     grid.hidden = !isCollection;
     document.getElementById("tradesView").hidden = view !== "trades";
     document.getElementById("groupView").hidden  = view !== "group";
