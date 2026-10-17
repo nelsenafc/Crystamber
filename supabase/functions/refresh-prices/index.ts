@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
   const prices: Record<string, unknown>[] = [];
   const history: Record<string, unknown>[] = [];
-  let next = 0, failed = 0;
+  let next = 0, failed = 0, noPrice = 0;
   async function worker() {
     while (next < todo.length) {
       const [setId, num] = todo[next++].split("|");
@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
           const m = (p as { marketPrice?: unknown })?.marketPrice;
           if (typeof m === "number" && m > 0) usd[variant] = m;
         }
+        // No TCGplayer price this time [TCGdex drops it now and then]: keep the
+        // last good price rather than overwrite it with nothing.
+        if (!Object.keys(usd).length) { noPrice++; continue; }
         const cm = card?.pricing?.cardmarket ?? {};
         const eur: Record<string, number> = {};
         for (const f of ["avg30", "trend", "avg30-holo", "trend-holo"]) if (typeof cm[f] === "number") eur[f] = cm[f];
@@ -85,7 +88,10 @@ Deno.serve(async (req) => {
   }
   await Promise.all(Array.from({ length: 6 }, worker));
 
-  if (prices.length) {
+  // If most cards came back without a price, TCGdex is having a bad day:
+  // write nothing and let the next run try again.
+  const outage = todo.length >= 10 && noPrice > todo.length / 2;
+  if (prices.length && !outage) {
     const a = await sb.from("card_prices").upsert(prices);
     const b = await sb.from("price_history").upsert(history);
     if (a.error || b.error) return json({ error: (a.error ?? b.error)!.message }, 500);
@@ -101,5 +107,5 @@ Deno.serve(async (req) => {
     } catch (_) { /* yesterday's rate still serves */ }
   }
 
-  return json({ owned: owned.size, priced: prices.length, failed, alreadyFresh: isFresh.size });
+  return json({ owned: owned.size, priced: outage ? 0 : prices.length, noPrice, outage, failed, alreadyFresh: isFresh.size });
 });
